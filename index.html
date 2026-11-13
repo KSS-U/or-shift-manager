@@ -1,84 +1,145 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#172b4d"><link rel="manifest" href="./manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>OR 근무관리</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#9bd5f7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>OR 근무관리</title>
 <style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;color:#172033;background:#f4f6fa}
-*{box-sizing:border-box}body{margin:0;padding:14px;max-width:1100px;margin:auto}
-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0 16px}
-h1{font-size:22px;margin:0}.sub{font-size:12px;color:#718096;margin-top:4px}
-button,select,input{font:inherit;border:1px solid #d8deea;border-radius:10px;padding:9px;background:white;color:#172033}
-button{cursor:pointer;font-weight:600}.primary{background:#203b65;color:white;border-color:#203b65}
-.toolbar,.tabs,.filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:10px 0}
-.panel{background:white;border:1px solid #e3e8f0;border-radius:14px;padding:12px;margin:10px 0;box-shadow:0 2px 8px #1d35570a}
-.month{font-size:18px;font-weight:800;min-width:130px;text-align:center}
-.tabs button.active,.filters button.active{background:#e8effa;border-color:#8aa5cb;color:#18365f}
-.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.dayname{text-align:center;font-size:12px;color:#68758a;padding:7px 0;font-weight:700}
-.day{min-height:104px;border:1px solid #e5e9f0;border-radius:9px;padding:5px;min-width:0}
-.day.muted{background:#f8f9fb;color:#aab2bf}.daynum{font-size:12px;font-weight:800;margin-bottom:4px}
-.entry{font-size:11px;padding:3px 4px;border-radius:5px;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#edf2f8;cursor:pointer}
-.entry b{margin-right:3px}.entry.D{background:#e6f1ff}.entry.C{background:#e9f7ed}.entry.BC{background:#fff2dc}.entry.off{background:#f1f1f3}
-.tablewrap{overflow:auto}.sheet{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}.sheet th,.sheet td{border:1px solid #e1e6ee;padding:7px 5px;text-align:center}.sheet th{background:#f3f6fa;position:sticky;top:0}.sheet td:first-child,.sheet th:first-child{position:sticky;left:0;background:#f8f9fb;z-index:1}
-.codes{display:flex;gap:6px;flex-wrap:wrap}.codes label{font-size:12px;background:#f4f6fa;padding:6px 8px;border-radius:8px}
-.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#f4f7fb;border-radius:9px;padding:8px 10px;font-size:12px}
-dialog{border:0;border-radius:16px;padding:18px;width:min(92vw,420px);box-shadow:0 12px 50px #0003}dialog::backdrop{background:#0006}dialog h3{margin:0 0 12px}
-.field{display:grid;gap:5px;margin:10px 0;font-size:13px}.field input,.field select{width:100%}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.hint{font-size:12px;color:#758196;line-height:1.5}
-@media(max-width:600px){body{padding:10px}.day{min-height:90px;padding:3px}.entry{font-size:10px;padding:3px 2px}.dayname{font-size:11px}.grid{gap:2px}.month{font-size:16px}}
-</style></head>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#718096;--line:#e5eaf1;--blue:#3478f6;--bluebg:#eaf1ff;--green:#16865b;--shadow:0 8px 24px rgba(28,45,75,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.app{max-width:900px;margin:auto;padding:18px 14px 40px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.brand{font-size:13px;font-weight:800;letter-spacing:1.5px;color:var(--blue)}h1{font-size:26px;margin:5px 0 0}.sub{font-size:12px;color:var(--muted)}.pill{border:1px solid #cfe0ff;background:var(--bluebg);color:#245fc4;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700}
+.tabs{display:flex;gap:7px;background:#e9edf4;padding:5px;border-radius:14px;margin:16px 0}.tabs button{flex:1;border:0;background:transparent;padding:11px 6px;border-radius:10px;font-weight:700;color:#657186}.tabs button.active{background:#fff;color:#1c2b43;box-shadow:0 2px 8px #1c2b4312}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin:12px 0;box-shadow:var(--shadow)}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}.sectionhead h2{font-size:16px;margin:0}.muted{color:var(--muted);font-size:12px}
+button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:700}.secondary{border:1px solid var(--line);background:white;color:#334155;border-radius:11px;padding:9px 12px;font-weight:650}.small{padding:7px 10px;font-size:12px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grow{flex:1}
+.monthnav{display:flex;align-items:center;justify-content:space-between;margin:12px 0}.monthnav strong{font-size:20px}.monthnav button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#f7f9fc;border-radius:13px;padding:11px}.stat b{font-size:20px;display:block}.stat span{font-size:11px;color:var(--muted)}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.dow{text-align:center;font-size:11px;color:var(--muted);padding:5px 0;font-weight:700}.day{min-height:77px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px;overflow:hidden;text-align:left}.day.blank{background:transparent;border-color:transparent}.day.today{border:2px solid var(--blue)}.day.selected{background:var(--bluebg);border-color:#8bb2ff}.daynum{font-size:11px;font-weight:800}.chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}.chip{font-size:10px;padding:3px 5px;border-radius:6px;background:#eef2f7;color:#344256;white-space:nowrap}.chip.D{background:#e7f0ff;color:#205fca}.chip.C{background:#e8f7ef;color:#16744d}.chip.BC{background:#fff1dd;color:#9a5a00}.chip.off{background:#edf0f4;color:#6b7280}.chip.V{background:#f4eaff;color:#7c3db3}.chip.HV{background:#ffe9f0;color:#a33463}.chip.HD{background:#e3f6f7;color:#16747b}.chip.외{background:#fff0e8;color:#a94f20}
+.filters{display:flex;gap:7px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:white;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700}.filter.on{border-color:#8bb2ff;background:var(--bluebg);color:#205fca}
+.tablewrap{overflow-x:auto}table{border-collapse:separate;border-spacing:0;width:100%;min-width:600px;font-size:12px}th,td{border-bottom:1px solid var(--line);padding:9px 6px;text-align:center;white-space:nowrap}th{color:var(--muted);font-weight:700;background:#fafbfd}th:first-child,td:first-child{position:sticky;left:0;background:#fff;text-align:left;z-index:1;font-weight:700}
+select,input{font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:var(--ink);min-width:0}label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}.field{flex:1;min-width:130px}
+.weekgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.weekday{border:1px solid var(--line);border-radius:10px;background:#fff;padding:7px 4px;min-height:185px}.weekday .date{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px}.personline{font-size:10px;padding:5px 3px;border-bottom:1px solid #f0f2f6;display:flex;justify-content:space-between;gap:2px}.personline:last-child{border:0}.personline b{font-size:10px}
+.modalback{position:fixed;inset:0;background:#10182766;display:none;align-items:flex-end;justify-content:center;z-index:10}.modalback.show{display:flex}.modal{width:min(100%,560px);background:white;border-radius:22px 22px 0 0;padding:20px 16px calc(22px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}.modal h3{margin:0 0 14px}.formrow{display:flex;gap:10px;margin:10px 0}.formrow>div{flex:1}.personlist{display:flex;flex-wrap:wrap;gap:7px}.person{border:1px solid var(--line);padding:8px 10px;border-radius:10px;font-size:12px}.person.active{background:var(--bluebg);border-color:#9bbcff;color:#205fca;font-weight:700}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}.hint{font-size:11px;line-height:1.5;color:var(--muted)}.hidden{display:none!important}
+@media(min-width:650px){.app{padding:28px 22px}.day{min-height:100px;padding:8px}.chip{font-size:11px}.weekday{min-height:250px;padding:9px}}
+</style>
+</head>
 <body>
-<header><div><h1>OR 근무관리</h1><div class="sub">6명 근무표 · 달력 / 엑셀형 · 자동 집계</div></div><button id="todayBtn">오늘</button></header>
-<div class="panel">
- <div class="toolbar"><button id="prev">‹</button><div class="month" id="monthLabel"></div><button id="next">›</button><button id="add" class="primary">＋ 근무 입력</button></div>
- <div class="tabs"><button data-view="calendar" class="active">달력형</button><button data-view="sheet">엑셀형</button><button data-view="staff">직원별</button></div>
- <div class="filters"><b style="font-size:12px">근무코드 필터</b><div class="codes" id="filters"></div><button id="allCodes">전체</button></div>
+<div class="app">
+  <header class="top">
+    <div><div class="brand">OR · SHIFT MANAGER</div><h1>근무관리</h1><div class="sub">전체 근무표와 개인별 근무를 한 곳에서</div></div>
+    <span class="pill">내 근무표</span>
+  </header>
+  <div class="stats">
+    <div class="stat"><b id="staffCount">6</b><span>등록 직원</span></div>
+    <div class="stat"><b id="shiftCount">0</b><span>이번 달 입력</span></div>
+    <div class="stat"><b id="codeCount">8</b><span>근무 코드</span></div>
+  </div>
+  <nav class="tabs">
+    <button class="active" data-view="calendar">달력형</button>
+    <button data-view="table">엑셀형</button>
+    <button data-view="week">주간 위젯</button>
+    <button data-view="people">직원 관리</button>
+  </nav>
+  <section id="calendarView">
+    <div class="monthnav"><button id="prevMonth">‹</button><strong id="monthTitle"></strong><button id="nextMonth">›</button></div>
+    <div class="card">
+      <div class="sectionhead"><h2>근무코드 필터</h2><button class="secondary small" id="clearFilters">전체 보기</button></div>
+      <div class="filters" id="filters"></div>
+      <p class="hint">여러 코드를 동시에 선택할 수 있어요. 선택한 코드가 있는 근무만 표시합니다.</p>
+    </div>
+    <div class="card">
+      <div class="sectionhead"><h2>월간 근무 달력</h2><span class="muted">날짜를 누르면 근무 입력</span></div>
+      <div class="calendar" id="calendar"></div>
+    </div>
+    <div class="card">
+      <div class="sectionhead"><h2 id="dayTitle">선택 날짜</h2><button class="primary small" id="addShift">＋ 근무 입력</button></div>
+      <div id="dayShifts" class="empty">날짜를 선택하면 해당 날짜의 근무가 표시됩니다.</div>
+    </div>
+  </section>
+  <section id="tableView" class="hidden">
+    <div class="monthnav"><button id="prevTable">‹</button><strong id="tableTitle"></strong><button id="nextTable">›</button></div>
+    <div class="card"><div class="sectionhead"><h2>직원별 월간 근무</h2><span class="muted">칸을 눌러 수정</span></div><div class="tablewrap" id="rosterTable"></div></div>
+  </section>
+  <section id="weekView" class="hidden">
+    <div class="monthnav"><button id="prevWeek">‹ 이전 주</button><strong id="weekTitle"></strong><button id="nextWeek">다음 주 ›</button></div>
+    <div class="card">
+      <div class="sectionhead"><h2>주간 전체 근무표</h2><span class="muted">직원 6명 전체</span></div>
+      <div class="weekgrid" id="weekGrid"></div>
+      <p class="hint">아이폰 홈 화면 위젯의 미리보기 화면입니다. 실제 iOS 홈 화면 위젯은 별도 앱 개발이 필요합니다.</p>
+    </div>
+  </section>
+  <section id="peopleView" class="hidden">
+    <div class="card">
+      <div class="sectionhead"><h2>직원 목록</h2><button class="primary small" id="addPerson">＋ 직원 추가</button></div>
+      <div id="peopleList"></div>
+    </div>
+    <div class="card">
+      <div class="sectionhead"><h2>직원별 근무표</h2></div>
+      <div class="row"><div class="field"><label>직원 선택</label><select id="personSelect"></select></div><div class="field"><label>조회 월</label><input id="personMonth" type="month"></div></div>
+      <div id="personSummary"></div>
+    </div>
+  </section>
+  <div class="card">
+    <div class="sectionhead"><h2>데이터 백업</h2><span class="muted">이 기기에 저장</span></div>
+    <div class="row"><button class="secondary" id="exportData">백업 파일 내보내기</button><button class="secondary" id="importButton">백업 불러오기</button><input type="file" id="importFile" accept="application/json" class="hidden"></div>
+    <p class="hint">근무 입력은 이 브라우저에 자동 저장됩니다. 브라우저 데이터 삭제 전 백업 파일을 내보내 주세요.</p>
+  </div>
 </div>
-<div class="panel" id="content"></div>
-<div class="panel"><b>월간 근무 횟수</b><div class="stats" id="stats" style="margin-top:9px"></div></div>
-<div class="panel"><b>직원 관리</b><div class="toolbar"><select id="staffSelect"></select><input id="newStaff" placeholder="새 직원 이름"><button id="addStaff">직원 추가</button><button id="renameStaff">이름 변경</button><button id="removeStaff">선택 직원 삭제</button></div><div class="hint">근무표 데이터는 현재 사용 중인 브라우저에 저장됩니다. 다른 기기와 자동 동기화되지는 않으니 정기적으로 백업해 주세요.</div><div class="toolbar"><button id="export">백업 내보내기</button><button id="importBtn">백업 불러오기</button><input id="file" type="file" accept="application/json" hidden></div></div>
-<dialog id="editDialog"><form method="dialog" id="editForm"><h3 id="dialogTitle">근무 입력</h3>
-<label class="field">날짜<input id="date" type="date" required></label>
-<label class="field">직원<select id="person"></select></label>
-<label class="field">근무 코드<select id="code"></select></label>
-<div class="actions"><button type="button" id="deleteEntry">삭제</button><span style="flex:1"></span><button value="cancel">취소</button><button class="primary" id="saveEntry" value="default">저장</button></div></form></dialog>
+<div class="modalback" id="modal">
+  <div class="modal">
+    <div class="sectionhead"><h3 id="modalTitle">근무 입력</h3><button class="secondary small" id="closeModal">닫기</button></div>
+    <div class="formrow"><div><label>날짜</label><input type="date" id="shiftDate"></div><div><label>직원</label><select id="shiftPerson"></select></div></div>
+    <label>근무 코드</label><div class="filters" id="codeChoices"></div>
+    <div class="row" style="margin-top:18px"><button class="primary grow" id="saveShift">저장</button><button class="secondary" id="deleteShift">삭제</button></div>
+    <p class="hint">한 날짜에 직원별 근무 코드는 하나씩 등록할 수 있습니다.</p>
+  </div>
+</div>
+<div class="modalback" id="personModal">
+ <div class="modal"><div class="sectionhead"><h3>직원 추가</h3><button class="secondary small" id="closePersonModal">닫기</button></div>
+ <label>직원 이름</label><input id="newPersonName" placeholder="이름 입력" style="width:100%">
+ <div class="row" style="margin-top:16px"><button class="primary grow" id="savePerson">추가하기</button></div></div>
+</div>
 <script>
-const codes=['D','C','BC','외','off','V','HV','HD'];
-const colors={};let data=JSON.parse(localStorage.getItem('orShiftData')||'null')||{staff:['김소선','나지혜','구수현','정혜린','조은서','남선웅'],entries:[]};
-let cursor=new Date();cursor.setDate(1);let view='calendar',selectedStaff=data.staff[0],activeCodes=new Set(codes),editingId=null;
-const $=id=>document.getElementById(id),ym=()=>`${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}`,key=(d,p)=>`${d}|${p}`;
-function save(){localStorage.setItem('orShiftData',JSON.stringify(data));render()}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function entriesFor(d){return data.entries.filter(e=>e.date===d&&activeCodes.has(e.code))}
-function renderFilters(){$('filters').innerHTML=codes.map(c=>`<label><input type="checkbox" data-code="${c}" ${activeCodes.has(c)?'checked':''}> ${c}</label>`).join('');$('filters').querySelectorAll('input').forEach(x=>x.onchange=()=>{x.checked?activeCodes.add(x.dataset.code):activeCodes.delete(x.dataset.code);render()})}
-function render(){
- $('monthLabel').textContent=`${cursor.getFullYear()}년 ${cursor.getMonth()+1}월`;renderFilters();
- document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
- const c=$('content');if(view==='calendar')calendar(c);else if(view==='sheet')sheet(c);else staffView(c);
- $('stats').innerHTML=data.staff.map(p=>{let n=data.entries.filter(e=>e.date.startsWith(ym())&&e.person===p&&activeCodes.has(e.code)).length;return `<span class="stat">${esc(p)} <b>${n}회</b></span>`}).join('');
- $('staffSelect').innerHTML=data.staff.map(p=>`<option ${p===selectedStaff?'selected':''}>${esc(p)}</option>`).join('');
-}
-function calendar(el){
- let first=new Date(cursor.getFullYear(),cursor.getMonth(),1),start=new Date(first);start.setDate(1-first.getDay());
- let out='<div class="grid">'+['일','월','화','수','목','금','토'].map(x=>`<div class="dayname">${x}</div>`).join('');
- for(let i=0;i<42;i++){let d=new Date(start);d.setDate(start.getDate()+i);let ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;let es=entriesFor(ds);out+=`<div class="day ${d.getMonth()!==cursor.getMonth()?'muted':''}"><div class="daynum">${d.getDate()}</div>${es.map(e=>`<div class="entry ${e.code==='off'?'off':e.code}" data-id="${e.id}"><b>${esc(e.person)}</b>${esc(e.code)}</div>`).join('')}<button style="padding:2px 5px;font-size:10px" data-new="${ds}">＋</button></div>`}
- el.innerHTML=out+'</div>';el.querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>openEdit(x.dataset.id));el.querySelectorAll('[data-new]').forEach(x=>x.onclick=()=>openEdit(null,x.dataset.new));
-}
-function sheet(el){
- let days=new Date(cursor.getFullYear(),cursor.getMonth()+1,0).getDate();let out='<div class="tablewrap"><table class="sheet"><tr><th>직원</th>'+Array.from({length:days},(_,i)=>`<th>${i+1}</th>`).join('')+'</tr>';
- data.staff.forEach(p=>{out+=`<tr><th>${esc(p)}</th>`;for(let i=1;i<=days;i++){let d=`${ym()}-${String(i).padStart(2,'0')}`,e=data.entries.find(x=>x.date===d&&x.person===p&&activeCodes.has(x.code));out+=`<td data-cell="${d}|${esc(p)}">${e?esc(e.code):''}</td>`}out+='</tr>'});el.innerHTML=out+'</table></div>';el.querySelectorAll('[data-cell]').forEach(x=>x.onclick=()=>{let [d,p]=x.dataset.cell.split('|');openEdit(null,d,p)});
-}
-function staffView(el){let p=selectedStaff;let es=data.entries.filter(e=>e.person===p&&e.date.startsWith(ym())&&activeCodes.has(e.code)).sort((a,b)=>a.date.localeCompare(b.date));el.innerHTML=`<label class="field">직원 선택<select id="personView">${data.staff.map(n=>`<option ${n===p?'selected':''}>${esc(n)}</option>`).join('')}</select></label><div>${es.length?es.map(e=>`<div class="entry ${e.code}" style="padding:9px;margin:5px 0" data-id="${e.id}">${e.date}　<b>${e.code}</b></div>`).join(''):'표시할 근무가 없습니다.'}</div>`;$('personView').onchange=e=>{selectedStaff=e.target.value;render()};el.querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>openEdit(x.dataset.id))}
-function openEdit(id,date,p){editingId=id;let e=data.entries.find(x=>x.id===id);$('dialogTitle').textContent=e?'근무 수정':'근무 입력';$('date').value=e?.date||date||`${ym()}-${String(new Date().getDate()).padStart(2,'0')}`;$('person').innerHTML=data.staff.map(n=>`<option ${n===(e?.person||p||selectedStaff)?'selected':''}>${esc(n)}</option>`).join('');$('code').innerHTML=codes.map(n=>`<option ${n===(e?.code||'D')?'selected':''}>${n}</option>`).join('');$('deleteEntry').style.display=e?'inline-block':'none';$('editDialog').showModal()}
-$('editForm').onsubmit=e=>{e.preventDefault();let item={id:editingId||String(Date.now()),date:$('date').value,person:$('person').value,code:$('code').value};if(editingId)data.entries=data.entries.map(x=>x.id===editingId?item:x);else{data.entries=data.entries.filter(x=>!(x.date===item.date&&x.person===item.person));data.entries.push(item)}$('editDialog').close();save()};
-$('deleteEntry').onclick=()=>{if(editingId&&confirm('이 근무를 삭제할까요?')){data.entries=data.entries.filter(x=>x.id!==editingId);$('editDialog').close();save()}};
-$('add').onclick=()=>openEdit();$('prev').onclick=()=>{cursor.setMonth(cursor.getMonth()-1);render()};$('next').onclick=()=>{cursor.setMonth(cursor.getMonth()+1);render()};$('todayBtn').onclick=()=>{cursor=new Date();cursor.setDate(1);render()};
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});$('allCodes').onclick=()=>{activeCodes=new Set(codes);render()};
-$('addStaff').onclick=()=>{let n=$('newStaff').value.trim();if(n&&!data.staff.includes(n)){data.staff.push(n);selectedStaff=n;$('newStaff').value='';save()}};
-$('renameStaff').onclick=()=>{let old=$('staffSelect').value,n=$('newStaff').value.trim();if(n&&!data.staff.includes(n)){data.staff[data.staff.indexOf(old)]=n;data.entries.forEach(e=>{if(e.person===old)e.person=n});selectedStaff=n;$('newStaff').value='';save()}};
-$('removeStaff').onclick=()=>{let p=$('staffSelect').value;if(confirm(`${p} 직원과 해당 근무 기록을 삭제할까요?`)){data.staff=data.staff.filter(x=>x!==p);data.entries=data.entries.filter(e=>e.person!==p);selectedStaff=data.staff[0];save()}};
-$('export').onclick=()=>{let a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=u;a.download=`OR근무표_${ym()}.json`;a.click();URL.revokeObjectURL(u)};
-$('importBtn').onclick=()=>$('file').click();$('file').onchange=async e=>{try{let v=JSON.parse(await e.target.files[0].text());if(Array.isArray(v.staff)&&Array.isArray(v.entries)){data=v;save();alert('불러왔습니다.')}}catch{alert('올바른 백업 파일이 아닙니다.')}};
-render();
-</script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));}</script></body></html>
+const DEFAULT_STAFF=["김소선","나지혜","구수현","정혜린","조은서","남선웅"];
+const CODES=["D","C","BC","외","off","V","HV","HD"];
+const KEY="orShiftManagerV1";
+let data=loadData(), view="calendar", current=new Date(), selectedDate=iso(new Date()), activeCodes=new Set(), chosenCode="D", weekStart=monday(new Date()), editingKey=null;
+function loadData(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.staff)&&x.shifts)return x}catch(e){}return {staff:[...DEFAULT_STAFF],shifts:{}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function parseDate(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function monday(d){let x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+function key(date,name){return date+"|"+name}
+function entries(date){return data.staff.map(n=>({name:n,code:data.shifts[key(date,n)]})).filter(x=>x.code)}
+function fmt(d){return `${d.getFullYear()}년 ${d.getMonth()+1}월`}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderAll(){document.getElementById("staffCount").textContent=data.staff.length;let ym=iso(current).slice(0,7);document.getElementById("shiftCount").textContent=Object.keys(data.shifts).filter(k=>k.startsWith(ym)).length;renderCalendar();renderTable();renderWeek();renderPeople();renderDay()}
+function switchView(v){view=v;document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));["calendar","table","week","people"].forEach(x=>document.getElementById(x+"View").classList.toggle("hidden",x!==v));renderAll()}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+function renderFilters(){let el=document.getElementById("filters");el.innerHTML=CODES.map(c=>`<button class="filter ${activeCodes.has(c)?"on":""}" data-code="${c}">${c}</button>`).join("");el.querySelectorAll("button").forEach(b=>b.onclick=()=>{let c=b.dataset.code;activeCodes.has(c)?activeCodes.delete(c):activeCodes.add(c);renderFilters();renderCalendar();renderDay()})}
+document.getElementById("clearFilters").onclick=()=>{activeCodes.clear();renderFilters();renderCalendar();renderDay()};
+function shown(code){return activeCodes.size===0||activeCodes.has(code)}
+function renderCalendar(){renderFilters();let y=current.getFullYear(),m=current.getMonth();document.getElementById("monthTitle").textContent=fmt(current);let first=new Date(y,m,1),start=(first.getDay()),n=new Date(y,m+1,0).getDate(),html=["일","월","화","수","목","금","토"].map(d=>`<div class="dow">${d}</div>`).join("");for(let i=0;i<start;i++)html+='<div class="day blank"></div>';for(let d=1;d<=n;d++){let date=iso(new Date(y,m,d)),list=entries(date).filter(x=>shown(x.code));let cls="day"+(date===iso(new Date())?" today":"")+(date===selectedDate?" selected":"");html+=`<button class="${cls}" data-date="${date}"><div class="daynum">${d}</div><div class="chips">${list.slice(0,5).map(x=>`<span class="chip ${x.code}">${esc(x.name.slice(0,2))} ${x.code}</span>`).join("")}${list.length>5?`<span class="chip">+${list.length-5}</span>`:""}</div></button>`}document.getElementById("calendar").innerHTML=html;document.querySelectorAll(".day[data-date]").forEach(b=>b.onclick=()=>{selectedDate=b.dataset.date;renderCalendar();renderDay()})}
+function renderDay(){let date=parseDate(selectedDate);document.getElementById("dayTitle").textContent=`${date.getMonth()+1}월 ${date.getDate()}일 근무 현황`;let list=entries(selectedDate).filter(x=>shown(x.code));let el=document.getElementById("dayShifts");el.className=list.length?"":"empty";el.innerHTML=list.length?list.map(x=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(x.name)}</b><span class="chip ${x.code}">${x.code}</span><button class="secondary small" data-edit="${esc(x.name)}">수정</button></div>`).join(""):"등록된 근무가 없거나 필터 조건에 맞는 근무가 없습니다.";el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShift(selectedDate,b.dataset.edit))}
+function renderTable(){document.getElementById("tableTitle").textContent=fmt(current);let y=current.getFullYear(),m=current.getMonth(),n=new Date(y,m+1,0).getDate();let h="<table><thead><tr><th>직원</th>"+Array.from({length:n},(_,i)=>`<th>${i+1}</th>`).join("")+"</tr></thead><tbody>";data.staff.forEach(name=>{h+=`<tr><td>${esc(name)}</td>`;for(let d=1;d<=n;d++){let date=iso(new Date(y,m,d)),c=data.shifts[key(date,name)];h+=`<td><button class="filter ${c&&shown(c)?"on":""}" data-cell="${date}" data-name="${esc(name)}">${c||"＋"}</button></td>`}h+="</tr>"});h+="</tbody></table>";document.getElementById("rosterTable").innerHTML=h;document.querySelectorAll("[data-cell]").forEach(b=>b.onclick=()=>openShift(b.dataset.cell,b.dataset.name))}
+function renderWeek(){let end=new Date(weekStart);end.setDate(end.getDate()+6);document.getElementById("weekTitle").textContent=`${weekStart.getMonth()+1}/${weekStart.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;let h="";for(let i=0;i<7;i++){let d=new Date(weekStart);d.setDate(d.getDate()+i);let date=iso(d);h+=`<div class="weekday"><div class="date">${["일","월","화","수","목","금","토"][d.getDay()]} ${d.getMonth()+1}/${d.getDate()}</div>`;data.staff.forEach(name=>{let c=data.shifts[key(date,name)];if(c)h+=`<div class="personline"><span>${esc(name)}</span><b class="chip ${c}">${c}</b></div>`});h+="</div>"}document.getElementById("weekGrid").innerHTML=h}
+function renderPeople(){document.getElementById("peopleList").innerHTML=data.staff.map((n,i)=>`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(n)}</b><button class="secondary small" data-rename="${i}">이름 수정</button><button class="secondary small" data-remove="${i}">삭제</button></div>`).join("");document.getElementById("personSelect").innerHTML=data.staff.map(n=>`<option>${esc(n)}</option>`).join("");document.getElementById("shiftPerson").innerHTML=data.staff.map(n=>`<option>${esc(n)}</option>`).join("");document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{let i=+b.dataset.remove,n=data.staff[i];if(confirm(n+" 직원을 삭제할까요? 등록된 근무도 함께 삭제됩니다.")){data.staff.splice(i,1);Object.keys(data.shifts).forEach(k=>{if(k.endsWith("|"+n))delete data.shifts[k]});save()}});document.querySelectorAll("[data-rename]").forEach(b=>b.onclick=()=>{let i=+b.dataset.rename,old=data.staff[i],n=prompt("새 직원 이름",old);if(n&&n.trim()&&n.trim()!==old){n=n.trim();if(data.staff.includes(n))return alert("이미 등록된 이름입니다.");data.staff[i]=n;Object.keys(data.shifts).forEach(k=>{if(k.endsWith("|"+old)){let date=k.split("|")[0],v=data.shifts[k];delete data.shifts[k];data.shifts[key(date,n)]=v}});save()}});document.getElementById("personMonth").value=iso(current).slice(0,7);renderPersonSummary()}
+function renderPersonSummary(){let n=document.getElementById("personSelect").value;if(!n)return;let ym=document.getElementById("personMonth").value||iso(current).slice(0,7);let arr=Object.entries(data.shifts).filter(([k])=>k.startsWith(ym)&&k.endsWith("|"+n));let counts=CODES.map(c=>[c,arr.filter(x=>x[1]===c).length]).filter(x=>x[1]);document.getElementById("personSummary").innerHTML=`<p><b>${esc(n)}</b> · ${ym}</p><div class="filters">${counts.length?counts.map(([c,num])=>`<span class="filter on">${c} ${num}회</span>`).join(""):"<span class='muted'>등록된 근무가 없습니다.</span>"}</div><div style="margin-top:12px">${arr.sort((a,b)=>a[0].localeCompare(b[0])).map(([k,c])=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="grow">${k.split("|")[0]}</span><span class="chip ${c}">${c}</span></div>`).join("")}</div>`}
+function openShift(date,name){editingKey=key(date,name);document.getElementById("shiftDate").value=date;document.getElementById("shiftPerson").value=name;chosenCode=data.shifts[editingKey]||"D";document.getElementById("deleteShift").style.display=data.shifts[editingKey]?"block":"none";document.getElementById("modalTitle").textContent=data.shifts[editingKey]?"근무 수정":"근무 입력";renderCodeChoices();document.getElementById("modal").classList.add("show")}
+function renderCodeChoices(){document.getElementById("codeChoices").innerHTML=CODES.map(c=>`<button class="filter ${chosenCode===c?"on":""}" data-choice="${c}">${c}</button>`).join("");document.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{chosenCode=b.dataset.choice;renderCodeChoices()})}
+document.getElementById("addShift").onclick=()=>openShift(selectedDate,data.staff[0]);document.getElementById("closeModal").onclick=()=>document.getElementById("modal").classList.remove("show");
+document.getElementById("saveShift").onclick=()=>{let date=document.getElementById("shiftDate").value,name=document.getElementById("shiftPerson").value;if(!date||!name)return alert("날짜와 직원을 선택해 주세요.");let k=key(date,name);data.shifts[k]=chosenCode;selectedDate=date;current=parseDate(date);document.getElementById("modal").classList.remove("show");save()};
+document.getElementById("deleteShift").onclick=()=>{delete data.shifts[editingKey];document.getElementById("modal").classList.remove("show");save()};
+document.getElementById("prevMonth").onclick=()=>{current.setMonth(current.getMonth()-1);renderAll()};document.getElementById("nextMonth").onclick=()=>{current.setMonth(current.getMonth()+1);renderAll()};document.getElementById("prevTable").onclick=()=>{current.setMonth(current.getMonth()-1);renderAll()};document.getElementById("nextTable").onclick=()=>{current.setMonth(current.getMonth()+1);renderAll()};
+document.getElementById("prevWeek").onclick=()=>{weekStart.setDate(weekStart.getDate()-7);renderWeek()};document.getElementById("nextWeek").onclick=()=>{weekStart.setDate(weekStart.getDate()+7);renderWeek()};
+document.getElementById("addPerson").onclick=()=>{document.getElementById("personModal").classList.add("show");document.getElementById("newPersonName").value=""};document.getElementById("closePersonModal").onclick=()=>document.getElementById("personModal").classList.remove("show");document.getElementById("savePerson").onclick=()=>{let n=document.getElementById("newPersonName").value.trim();if(!n)return alert("이름을 입력해 주세요.");if(data.staff.includes(n))return alert("이미 등록된 직원입니다.");data.staff.push(n);document.getElementById("personModal").classList.remove("show");save()};
+document.getElementById("personSelect").onchange=renderPersonSummary;document.getElementById("personMonth").onchange=renderPersonSummary;
+document.getElementById("exportData").onclick=()=>{let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="OR근무관리_백업.json";a.click();URL.revokeObjectURL(a.href)};
+document.getElementById("importButton").onclick=()=>document.getElementById("importFile").click();document.getElementById("importFile").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.staff)||!x.shifts)throw 0;data=x;save();alert("백업을 불러왔습니다.")}catch(err){alert("올바른 백업 파일이 아닙니다.")}e.target.value=""};
+renderAll();
+</script>
+<script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(console.error)); }</script>
+</body></html>

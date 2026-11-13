@@ -1,23 +1,15 @@
-OR 근무관리 웹앱 배포 파일
+OR 근무관리 앱 - 파스텔 하늘색 duty 아이콘 업데이트
 
-구성
-- index.html: 근무관리 앱
-- manifest.webmanifest: 홈 화면 설치 정보
-- service-worker.js: 오프라인 캐시
+GitHub 저장소의 기존 파일을 새 파일로 교체하세요. ZIP 자체를 업로드하지 말고, 압축을 푼 폴더 안의 파일/폴더를 저장소 최상위(root)에 업로드합니다.
 
-무료 배포 예시: GitHub Pages
-1. GitHub 계정에 로그인하고 새 저장소(repository)를 만듭니다.
-2. 저장소 이름 예: or-shift-manager
-3. 이 ZIP의 파일 3개를 저장소 최상위(root)에 업로드합니다.
-4. 저장소 Settings > Pages로 이동합니다.
-5. Build and deployment에서 Deploy from a branch를 선택합니다.
-6. Branch는 main, 폴더는 /(root)로 선택하고 Save를 누릅니다.
-7. 공개 주소가 만들어질 때까지 잠시 기다린 뒤 표시된 주소를 Safari에서 엽니다.
-8. Safari 공유 버튼 > 홈 화면에 추가를 선택합니다.
+최상위에 있어야 할 항목:
+- index.html
+- manifest.webmanifest
+- service-worker.js
+- icons/ (폴더 안에 icon-192.png, icon-512.png, apple-touch-icon.png)
 
-주의
-- 이 앱은 현재 브라우저의 localStorage에 데이터를 저장합니다.
-- 브라우저 데이터 삭제, 기기 변경 시 데이터가 사라질 수 있으므로 앱의 백업 내보내기를 자주 이용하세요.
-- 여러 기기 간 자동 동기화 및 로그인 기능은 아직 없습니다.
-- 근무표 사진 자동 인식 및 실제 iOS 위젯은 아직 구현되지 않았습니다.
-- 직원 근무표는 민감한 내부 정보일 수 있으므로 공개 저장소에는 실제 근무 데이터를 넣지 마세요. 저장소에는 앱 파일만 올리고, 실제 근무표는 앱 안에서 입력하세요.
+GitHub 저장소에서 Add file > Upload files로 위 파일과 icons 폴더를 올리고 Commit changes를 누릅니다. 기존 파일이 있으면 같은 경로에 업로드해 덮어씁니다.
+
+배포 후 iPhone Safari에서 사이트를 다시 열고, 홈 화면에 이미 추가한 아이콘은 삭제한 뒤 Safari 공유 > 홈 화면에 추가로 다시 추가하세요. 이미 설치된 PWA는 이전 아이콘을 캐시할 수 있으므로 새로고침/재설치가 필요할 수 있습니다.
+
+참고: 이 앱은 브라우저 저장소(localStorage)를 사용합니다. 실제 근무표나 개인정보를 GitHub에 업로드하지 마세요. 정기적으로 앱 내 백업 기능을 사용하세요.
