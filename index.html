@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172b4d"><link rel="manifest" href="./manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>OR 근무관리</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;color:#172033;background:#f4f6fa}
+*{box-sizing:border-box}body{margin:0;padding:14px;max-width:1100px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0 16px}
+h1{font-size:22px;margin:0}.sub{font-size:12px;color:#718096;margin-top:4px}
+button,select,input{font:inherit;border:1px solid #d8deea;border-radius:10px;padding:9px;background:white;color:#172033}
+button{cursor:pointer;font-weight:600}.primary{background:#203b65;color:white;border-color:#203b65}
+.toolbar,.tabs,.filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.panel{background:white;border:1px solid #e3e8f0;border-radius:14px;padding:12px;margin:10px 0;box-shadow:0 2px 8px #1d35570a}
+.month{font-size:18px;font-weight:800;min-width:130px;text-align:center}
+.tabs button.active,.filters button.active{background:#e8effa;border-color:#8aa5cb;color:#18365f}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dayname{text-align:center;font-size:12px;color:#68758a;padding:7px 0;font-weight:700}
+.day{min-height:104px;border:1px solid #e5e9f0;border-radius:9px;padding:5px;min-width:0}
+.day.muted{background:#f8f9fb;color:#aab2bf}.daynum{font-size:12px;font-weight:800;margin-bottom:4px}
+.entry{font-size:11px;padding:3px 4px;border-radius:5px;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#edf2f8;cursor:pointer}
+.entry b{margin-right:3px}.entry.D{background:#e6f1ff}.entry.C{background:#e9f7ed}.entry.BC{background:#fff2dc}.entry.off{background:#f1f1f3}
+.tablewrap{overflow:auto}.sheet{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}.sheet th,.sheet td{border:1px solid #e1e6ee;padding:7px 5px;text-align:center}.sheet th{background:#f3f6fa;position:sticky;top:0}.sheet td:first-child,.sheet th:first-child{position:sticky;left:0;background:#f8f9fb;z-index:1}
+.codes{display:flex;gap:6px;flex-wrap:wrap}.codes label{font-size:12px;background:#f4f6fa;padding:6px 8px;border-radius:8px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#f4f7fb;border-radius:9px;padding:8px 10px;font-size:12px}
+dialog{border:0;border-radius:16px;padding:18px;width:min(92vw,420px);box-shadow:0 12px 50px #0003}dialog::backdrop{background:#0006}dialog h3{margin:0 0 12px}
+.field{display:grid;gap:5px;margin:10px 0;font-size:13px}.field input,.field select{width:100%}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.hint{font-size:12px;color:#758196;line-height:1.5}
+@media(max-width:600px){body{padding:10px}.day{min-height:90px;padding:3px}.entry{font-size:10px;padding:3px 2px}.dayname{font-size:11px}.grid{gap:2px}.month{font-size:16px}}
+</style></head>
+<body>
+<header><div><h1>OR 근무관리</h1><div class="sub">6명 근무표 · 달력 / 엑셀형 · 자동 집계</div></div><button id="todayBtn">오늘</button></header>
+<div class="panel">
+ <div class="toolbar"><button id="prev">‹</button><div class="month" id="monthLabel"></div><button id="next">›</button><button id="add" class="primary">＋ 근무 입력</button></div>
+ <div class="tabs"><button data-view="calendar" class="active">달력형</button><button data-view="sheet">엑셀형</button><button data-view="staff">직원별</button></div>
+ <div class="filters"><b style="font-size:12px">근무코드 필터</b><div class="codes" id="filters"></div><button id="allCodes">전체</button></div>
+</div>
+<div class="panel" id="content"></div>
+<div class="panel"><b>월간 근무 횟수</b><div class="stats" id="stats" style="margin-top:9px"></div></div>
+<div class="panel"><b>직원 관리</b><div class="toolbar"><select id="staffSelect"></select><input id="newStaff" placeholder="새 직원 이름"><button id="addStaff">직원 추가</button><button id="renameStaff">이름 변경</button><button id="removeStaff">선택 직원 삭제</button></div><div class="hint">근무표 데이터는 현재 사용 중인 브라우저에 저장됩니다. 다른 기기와 자동 동기화되지는 않으니 정기적으로 백업해 주세요.</div><div class="toolbar"><button id="export">백업 내보내기</button><button id="importBtn">백업 불러오기</button><input id="file" type="file" accept="application/json" hidden></div></div>
+<dialog id="editDialog"><form method="dialog" id="editForm"><h3 id="dialogTitle">근무 입력</h3>
+<label class="field">날짜<input id="date" type="date" required></label>
+<label class="field">직원<select id="person"></select></label>
+<label class="field">근무 코드<select id="code"></select></label>
+<div class="actions"><button type="button" id="deleteEntry">삭제</button><span style="flex:1"></span><button value="cancel">취소</button><button class="primary" id="saveEntry" value="default">저장</button></div></form></dialog>
+<script>
+const codes=['D','C','BC','외','off','V','HV','HD'];
+const colors={};let data=JSON.parse(localStorage.getItem('orShiftData')||'null')||{staff:['김소선','나지혜','구수현','정혜린','조은서','남선웅'],entries:[]};
+let cursor=new Date();cursor.setDate(1);let view='calendar',selectedStaff=data.staff[0],activeCodes=new Set(codes),editingId=null;
+const $=id=>document.getElementById(id),ym=()=>`${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}`,key=(d,p)=>`${d}|${p}`;
+function save(){localStorage.setItem('orShiftData',JSON.stringify(data));render()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function entriesFor(d){return data.entries.filter(e=>e.date===d&&activeCodes.has(e.code))}
+function renderFilters(){$('filters').innerHTML=codes.map(c=>`<label><input type="checkbox" data-code="${c}" ${activeCodes.has(c)?'checked':''}> ${c}</label>`).join('');$('filters').querySelectorAll('input').forEach(x=>x.onchange=()=>{x.checked?activeCodes.add(x.dataset.code):activeCodes.delete(x.dataset.code);render()})}
+function render(){
+ $('monthLabel').textContent=`${cursor.getFullYear()}년 ${cursor.getMonth()+1}월`;renderFilters();
+ document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ const c=$('content');if(view==='calendar')calendar(c);else if(view==='sheet')sheet(c);else staffView(c);
+ $('stats').innerHTML=data.staff.map(p=>{let n=data.entries.filter(e=>e.date.startsWith(ym())&&e.person===p&&activeCodes.has(e.code)).length;return `<span class="stat">${esc(p)} <b>${n}회</b></span>`}).join('');
+ $('staffSelect').innerHTML=data.staff.map(p=>`<option ${p===selectedStaff?'selected':''}>${esc(p)}</option>`).join('');
+}
+function calendar(el){
+ let first=new Date(cursor.getFullYear(),cursor.getMonth(),1),start=new Date(first);start.setDate(1-first.getDay());
+ let out='<div class="grid">'+['일','월','화','수','목','금','토'].map(x=>`<div class="dayname">${x}</div>`).join('');
+ for(let i=0;i<42;i++){let d=new Date(start);d.setDate(start.getDate()+i);let ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;let es=entriesFor(ds);out+=`<div class="day ${d.getMonth()!==cursor.getMonth()?'muted':''}"><div class="daynum">${d.getDate()}</div>${es.map(e=>`<div class="entry ${e.code==='off'?'off':e.code}" data-id="${e.id}"><b>${esc(e.person)}</b>${esc(e.code)}</div>`).join('')}<button style="padding:2px 5px;font-size:10px" data-new="${ds}">＋</button></div>`}
+ el.innerHTML=out+'</div>';el.querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>openEdit(x.dataset.id));el.querySelectorAll('[data-new]').forEach(x=>x.onclick=()=>openEdit(null,x.dataset.new));
+}
+function sheet(el){
+ let days=new Date(cursor.getFullYear(),cursor.getMonth()+1,0).getDate();let out='<div class="tablewrap"><table class="sheet"><tr><th>직원</th>'+Array.from({length:days},(_,i)=>`<th>${i+1}</th>`).join('')+'</tr>';
+ data.staff.forEach(p=>{out+=`<tr><th>${esc(p)}</th>`;for(let i=1;i<=days;i++){let d=`${ym()}-${String(i).padStart(2,'0')}`,e=data.entries.find(x=>x.date===d&&x.person===p&&activeCodes.has(x.code));out+=`<td data-cell="${d}|${esc(p)}">${e?esc(e.code):''}</td>`}out+='</tr>'});el.innerHTML=out+'</table></div>';el.querySelectorAll('[data-cell]').forEach(x=>x.onclick=()=>{let [d,p]=x.dataset.cell.split('|');openEdit(null,d,p)});
+}
+function staffView(el){let p=selectedStaff;let es=data.entries.filter(e=>e.person===p&&e.date.startsWith(ym())&&activeCodes.has(e.code)).sort((a,b)=>a.date.localeCompare(b.date));el.innerHTML=`<label class="field">직원 선택<select id="personView">${data.staff.map(n=>`<option ${n===p?'selected':''}>${esc(n)}</option>`).join('')}</select></label><div>${es.length?es.map(e=>`<div class="entry ${e.code}" style="padding:9px;margin:5px 0" data-id="${e.id}">${e.date}　<b>${e.code}</b></div>`).join(''):'표시할 근무가 없습니다.'}</div>`;$('personView').onchange=e=>{selectedStaff=e.target.value;render()};el.querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>openEdit(x.dataset.id))}
+function openEdit(id,date,p){editingId=id;let e=data.entries.find(x=>x.id===id);$('dialogTitle').textContent=e?'근무 수정':'근무 입력';$('date').value=e?.date||date||`${ym()}-${String(new Date().getDate()).padStart(2,'0')}`;$('person').innerHTML=data.staff.map(n=>`<option ${n===(e?.person||p||selectedStaff)?'selected':''}>${esc(n)}</option>`).join('');$('code').innerHTML=codes.map(n=>`<option ${n===(e?.code||'D')?'selected':''}>${n}</option>`).join('');$('deleteEntry').style.display=e?'inline-block':'none';$('editDialog').showModal()}
+$('editForm').onsubmit=e=>{e.preventDefault();let item={id:editingId||String(Date.now()),date:$('date').value,person:$('person').value,code:$('code').value};if(editingId)data.entries=data.entries.map(x=>x.id===editingId?item:x);else{data.entries=data.entries.filter(x=>!(x.date===item.date&&x.person===item.person));data.entries.push(item)}$('editDialog').close();save()};
+$('deleteEntry').onclick=()=>{if(editingId&&confirm('이 근무를 삭제할까요?')){data.entries=data.entries.filter(x=>x.id!==editingId);$('editDialog').close();save()}};
+$('add').onclick=()=>openEdit();$('prev').onclick=()=>{cursor.setMonth(cursor.getMonth()-1);render()};$('next').onclick=()=>{cursor.setMonth(cursor.getMonth()+1);render()};$('todayBtn').onclick=()=>{cursor=new Date();cursor.setDate(1);render()};
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});$('allCodes').onclick=()=>{activeCodes=new Set(codes);render()};
+$('addStaff').onclick=()=>{let n=$('newStaff').value.trim();if(n&&!data.staff.includes(n)){data.staff.push(n);selectedStaff=n;$('newStaff').value='';save()}};
+$('renameStaff').onclick=()=>{let old=$('staffSelect').value,n=$('newStaff').value.trim();if(n&&!data.staff.includes(n)){data.staff[data.staff.indexOf(old)]=n;data.entries.forEach(e=>{if(e.person===old)e.person=n});selectedStaff=n;$('newStaff').value='';save()}};
+$('removeStaff').onclick=()=>{let p=$('staffSelect').value;if(confirm(`${p} 직원과 해당 근무 기록을 삭제할까요?`)){data.staff=data.staff.filter(x=>x!==p);data.entries=data.entries.filter(e=>e.person!==p);selectedStaff=data.staff[0];save()}};
+$('export').onclick=()=>{let a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=u;a.download=`OR근무표_${ym()}.json`;a.click();URL.revokeObjectURL(u)};
+$('importBtn').onclick=()=>$('file').click();$('file').onchange=async e=>{try{let v=JSON.parse(await e.target.files[0].text());if(Array.isArray(v.staff)&&Array.isArray(v.entries)){data=v;save();alert('불러왔습니다.')}}catch{alert('올바른 백업 파일이 아닙니다.')}};
+render();
+</script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));}</script></body></html>

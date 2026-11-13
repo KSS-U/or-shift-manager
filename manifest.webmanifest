@@ -1,0 +1,11 @@
+{
+  "name": "OR 근무관리",
+  "short_name": "OR근무표",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#172b4d",
+  "lang": "ko",
+  "description": "수술실 직원 근무표 관리"
+}
