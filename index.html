@@ -34,26 +34,23 @@ button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue)
   border-bottom:1px solid #ddd5eb;
   border-right:1px solid #ddd5eb;
 }
+.day {
+  box-shadow: none;
+  border: 0;
+  border-right: 1px solid #ddd5eb;
+  border-bottom: 1px solid #ddd5eb;
+}
 
-.day{
-  min-height:105px;
-  border:0;
-  border-right:1px solid #ddd5eb;
-  border-bottom:1px solid #ddd5eb;
-  background:#fff;
-  border-radius:0;
-  padding:7px 5px;
-  overflow:hidden;
-  text-align:left;
+.day.today {
+  border: 0;
+  border-right: 1px solid #ddd5eb;
+  border-bottom: 1px solid #ddd5eb;
+  background: #f7f3ff;
+  box-shadow: inset 0 0 0 1px #ad9bd8;
 }
 
 .day.blank{
   background:#faf8fd;
-}
-
-.day.today{
-  background:#f7f3ff;
-  box-shadow:inset 0 0 0 1px #ad9bd8;
 }
 
 .day.selected{
