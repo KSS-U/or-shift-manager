@@ -604,8 +604,8 @@ let list=entries(date)
     html+=`<button class="${cls}" data-date="${date}">
       <div class="daynum">${d}</div>
       <div class="chips">
-        ${list.slice(0,5).map(x=>`<span class="chip ${x.code}">${esc(x.name.slice(0,2))} ${x.code}</span>`).join("")}
-        ${list.length>5?`<span class="chip">+${list.length-5}</span>`:""}
+        ${list.slice(0,8).map(x=>`<span class="chip ${x.code}">${esc(x.name.slice(0,2))} ${x.code}</span>`).join("")}
+        ${list.length>8?`<span class="chip">+${list.length-8}</span>`:""}
       </div>
     </button>`;
   }
