@@ -68,18 +68,22 @@ button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue)
 .chips{
   display:flex;
   flex-wrap:wrap;
-  gap:4px;
-  margin-top:8px;
+  gap:3px;
+  margin-top:7px;
+  align-items:flex-start;
 }
 
 .chip{
-  font-size:12px;
+  font-size:11px;
   font-weight:800;
-  padding:5px 7px;
-  border-radius:7px;
-  min-width:25px;
+  padding:4px 4px;
+  border-radius:6px;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
   text-align:center;
   white-space:nowrap;
+  line-height:1.2;
 }
 .filters{display:flex;gap:7px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:white;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700}.filter.on{border-color:#8bb2ff;background:var(--bluebg);color:#205fca}
 .tablewrap{overflow-x:auto}table{border-collapse:separate;border-spacing:0;width:100%;min-width:600px;font-size:12px}th,td{border-bottom:1px solid var(--line);padding:9px 6px;text-align:center;white-space:nowrap}th{color:var(--muted);font-weight:700;background:#fafbfd}th:first-child,td:first-child{position:sticky;left:0;background:#fff;text-align:left;z-index:1;font-weight:700}
