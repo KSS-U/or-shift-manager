@@ -553,7 +553,11 @@ function renderCalendar(){
   for(let d=1;d<=n;d++){
     let date=iso(new Date(y,m,d));
     let weekday=new Date(y,m,d).getDay();
-    let list=entries(date).filter(x=>shown(x.code));
+    let CODE_ORDER = ["C","BC","외","HD","HV","V","off","D"];
+
+let list=entries(date)
+  .filter(x=>shown(x.code))
+  .sort((a,b)=>CODE_ORDER.indexOf(a.code)-CODE_ORDER.indexOf(b.code));
 
     let cls="day";
 
