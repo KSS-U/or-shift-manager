@@ -166,15 +166,26 @@
       const lastDay = new Date(year, mon, 0).getDate();
 
       // 날짜 숫자 찾기
+      
       const dateWords = words.map(w => {
-        const value = clean(w.text);
+        const raw = String(w.text || "").trim();
+        const value = raw.replace(/[^0-9]/g, "");
 
         return {
-          day: Number(value),
+          day: value ? Number(value) : NaN,
           x: (w.bbox.x0 + w.bbox.x1) / 2,
           y: (w.bbox.y0 + w.bbox.y1) / 2
         };
       }).filter(w =>
+        Number.isInteger(w.day) &&
+        w.day >= 1 &&
+        w.day <= lastDay
+      );
+            console.log("인식된 날짜 숫자:", dateWords);
+      status.textContent =
+        `날짜 숫자 ${dateWords.length}개 인식됨: ` +
+        dateWords.map(w => w.day).join(", ");
+
         Number.isInteger(w.day) &&
         w.day >= 1 &&
         w.day <= lastDay
