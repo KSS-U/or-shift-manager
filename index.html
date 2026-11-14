@@ -504,6 +504,16 @@ const DEFAULT_STAFF=["김소선","나지혜","구수현","정혜린","조은서"
 const CODES=["D","C","BC","외","off","V","HV","HD"];
 const KEY="orShiftManagerV1";
 let selectedPeople = new Set();
+  
+let data=loadData(),
+    view="calendar",
+    current=new Date(),
+    selectedDate=iso(new Date()),
+    activeCodes=new Set(),
+    chosenCode="D",
+    weekStart=monday(new Date()),
+    editingKey=null;
+
 function loadData(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.staff)&&x.shifts)return x}catch(e){}return {staff:[...DEFAULT_STAFF],shifts:{}}}
 function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
 function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
