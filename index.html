@@ -60,6 +60,14 @@ button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue)
   font-size:13px;
   font-weight:800;
 }
+  /* 공휴일 빨간색 */
+.day.holiday .daynum,
+.day.sunday .daynum {
+  color: #e05265;
+}
+.day.saturday .daynum {
+  color: #548bd6;
+}
 .chips{
   display:flex;
   flex-wrap:wrap;
@@ -324,8 +332,8 @@ button:active {
     </div>
   </section>
   <section id="tableView" class="hidden">
-    <div class="monthnav"><button id="prevTable">‹</button><strong id="tableTitle"></strong><button id="nextTable">›</button></div>
-    <div class="card"><div class="sectionhead"><h2>직원별 월간 근무</h2><span class="muted">칸을 눌러 수정</span></div><div class="tablewrap" id="rosterTable"></div></div>
+<div class="monthnav"><button id="prevTable">‹ 이전 주</button><strong id="tableTitle"></strong><button id="nextTable">다음 주 ›</button></div>
+    <div class="card"><div class="sectionhead"><h2>직원별 주간 근무</h2><span class="muted">칸을 눌러 수정</span></div><div class="tablewrap" id="rosterTable"></div></div>
   </section>
   <section id="weekView" class="hidden">
     <div class="monthnav"><button id="prevWeek">‹ 이전 주</button><strong id="weekTitle"></strong><button id="nextWeek">다음 주 ›</button></div>
@@ -388,7 +396,46 @@ document.getElementById("clearFilters").onclick=()=>{activeCodes.clear();renderF
 function shown(code){return activeCodes.size===0||activeCodes.has(code)}
 function renderCalendar(){renderFilters();let y=current.getFullYear(),m=current.getMonth();document.getElementById("monthTitle").textContent=fmt(current);let first=new Date(y,m,1),start=(first.getDay()),n=new Date(y,m+1,0).getDate(),html=["일","월","화","수","목","금","토"].map(d=>`<div class="dow">${d}</div>`).join("");for(let i=0;i<start;i++)html+='<div class="day blank"></div>';for(let d=1;d<=n;d++){let date=iso(new Date(y,m,d)),list=entries(date).filter(x=>shown(x.code));let cls="day"+(date===iso(new Date())?" today":"")+(date===selectedDate?" selected":"");html+=`<button class="${cls}" data-date="${date}"><div class="daynum">${d}</div><div class="chips">${list.slice(0,5).map(x=>`<span class="chip ${x.code}">${esc(x.name.slice(0,2))} ${x.code}</span>`).join("")}${list.length>5?`<span class="chip">+${list.length-5}</span>`:""}</div></button>`}document.getElementById("calendar").innerHTML=html;document.querySelectorAll(".day[data-date]").forEach(b=>b.onclick=()=>{selectedDate=b.dataset.date;renderCalendar();renderDay()})}
 function renderDay(){let date=parseDate(selectedDate);document.getElementById("dayTitle").textContent=`${date.getMonth()+1}월 ${date.getDate()}일 근무 현황`;let list=entries(selectedDate).filter(x=>shown(x.code));let el=document.getElementById("dayShifts");el.className=list.length?"":"empty";el.innerHTML=list.length?list.map(x=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(x.name)}</b><span class="chip ${x.code}">${x.code}</span><button class="secondary small" data-edit="${esc(x.name)}">수정</button></div>`).join(""):"등록된 근무가 없거나 필터 조건에 맞는 근무가 없습니다.";el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShift(selectedDate,b.dataset.edit))}
-function renderTable(){document.getElementById("tableTitle").textContent=fmt(current);let y=current.getFullYear(),m=current.getMonth(),n=new Date(y,m+1,0).getDate();let h="<table><thead><tr><th>직원</th>"+Array.from({length:n},(_,i)=>`<th>${i+1}</th>`).join("")+"</tr></thead><tbody>";data.staff.forEach(name=>{h+=`<tr><td>${esc(name)}</td>`;for(let d=1;d<=n;d++){let date=iso(new Date(y,m,d)),c=data.shifts[key(date,name)];h+=`<td><button class="filter ${c&&shown(c)?"on":""}" data-cell="${date}" data-name="${esc(name)}">${c||"＋"}</button></td>`}h+="</tr>"});h+="</tbody></table>";document.getElementById("rosterTable").innerHTML=h;document.querySelectorAll("[data-cell]").forEach(b=>b.onclick=()=>openShift(b.dataset.cell,b.dataset.name))}
+function renderTable(){
+  let dates=Array.from({length:7},(_,i)=>{
+    let d=new Date(weekStart);
+    d.setDate(d.getDate()+i);
+    return d;
+  });
+
+  let end=dates[6];
+  document.getElementById("tableTitle").textContent=
+    `${dates[0].getMonth()+1}/${dates[0].getDate()} ~ ${end.getMonth()+1}/${end.getDate()}`;
+
+  let h="<table><thead><tr><th>직원</th>";
+
+  dates.forEach(d=>{
+    let date=iso(d);
+    let day=["일","월","화","수","목","금","토"][d.getDay()];
+    h+=`<th>${day}<br>${d.getMonth()+1}/${d.getDate()}</th>`;
+  });
+
+  h+="</tr></thead><tbody>";
+
+  data.staff.forEach(name=>{
+    h+=`<tr><td>${esc(name)}</td>`;
+
+    dates.forEach(d=>{
+      let date=iso(d);
+      let c=data.shifts[key(date,name)];
+      h+=`<td><button class="filter ${c&&shown(c)?"on":""}" data-cell="${date}" data-name="${esc(name)}">${c||"＋"}</button></td>`;
+    });
+
+    h+="</tr>";
+  });
+
+  h+="</tbody></table>";
+  document.getElementById("rosterTable").innerHTML=h;
+
+  document.querySelectorAll("#rosterTable [data-cell]").forEach(b=>{
+    b.onclick=()=>openShift(b.dataset.cell,b.dataset.name);
+  });
+}
 function renderWeek(){let end=new Date(weekStart);end.setDate(end.getDate()+6);document.getElementById("weekTitle").textContent=`${weekStart.getMonth()+1}/${weekStart.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;let h="";for(let i=0;i<7;i++){let d=new Date(weekStart);d.setDate(d.getDate()+i);let date=iso(d);h+=`<div class="weekday"><div class="date">${["일","월","화","수","목","금","토"][d.getDay()]} ${d.getMonth()+1}/${d.getDate()}</div>`;data.staff.forEach(name=>{let c=data.shifts[key(date,name)];if(c)h+=`<div class="personline"><span>${esc(name)}</span><b class="chip ${c}">${c}</b></div>`});h+="</div>"}document.getElementById("weekGrid").innerHTML=h}
 function renderPeople(){document.getElementById("peopleList").innerHTML=data.staff.map((n,i)=>`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(n)}</b><button class="secondary small" data-rename="${i}">이름 수정</button><button class="secondary small" data-remove="${i}">삭제</button></div>`).join("");document.getElementById("personSelect").innerHTML=data.staff.map(n=>`<option>${esc(n)}</option>`).join("");document.getElementById("shiftPerson").innerHTML=data.staff.map(n=>`<option>${esc(n)}</option>`).join("");document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{let i=+b.dataset.remove,n=data.staff[i];if(confirm(n+" 직원을 삭제할까요? 등록된 근무도 함께 삭제됩니다.")){data.staff.splice(i,1);Object.keys(data.shifts).forEach(k=>{if(k.endsWith("|"+n))delete data.shifts[k]});save()}});document.querySelectorAll("[data-rename]").forEach(b=>b.onclick=()=>{let i=+b.dataset.rename,old=data.staff[i],n=prompt("새 직원 이름",old);if(n&&n.trim()&&n.trim()!==old){n=n.trim();if(data.staff.includes(n))return alert("이미 등록된 이름입니다.");data.staff[i]=n;Object.keys(data.shifts).forEach(k=>{if(k.endsWith("|"+old)){let date=k.split("|")[0],v=data.shifts[k];delete data.shifts[k];data.shifts[key(date,n)]=v}});save()}});document.getElementById("personMonth").value=iso(current).slice(0,7);renderPersonSummary()}
 function renderPersonSummary(){let n=document.getElementById("personSelect").value;if(!n)return;let ym=document.getElementById("personMonth").value||iso(current).slice(0,7);let arr=Object.entries(data.shifts).filter(([k])=>k.startsWith(ym)&&k.endsWith("|"+n));let counts=CODES.map(c=>[c,arr.filter(x=>x[1]===c).length]).filter(x=>x[1]);document.getElementById("personSummary").innerHTML=`<p><b>${esc(n)}</b> · ${ym}</p><div class="filters">${counts.length?counts.map(([c,num])=>`<span class="filter on">${c} ${num}회</span>`).join(""):"<span class='muted'>등록된 근무가 없습니다.</span>"}</div><div style="margin-top:12px">${arr.sort((a,b)=>a[0].localeCompare(b[0])).map(([k,c])=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="grow">${k.split("|")[0]}</span><span class="chip ${c}">${c}</span></div>`).join("")}</div>`}
@@ -397,7 +444,15 @@ function renderCodeChoices(){document.getElementById("codeChoices").innerHTML=CO
 document.getElementById("addShift").onclick=()=>openShift(selectedDate,data.staff[0]);document.getElementById("closeModal").onclick=()=>document.getElementById("modal").classList.remove("show");
 document.getElementById("saveShift").onclick=()=>{let date=document.getElementById("shiftDate").value,name=document.getElementById("shiftPerson").value;if(!date||!name)return alert("날짜와 직원을 선택해 주세요.");let k=key(date,name);data.shifts[k]=chosenCode;selectedDate=date;current=parseDate(date);document.getElementById("modal").classList.remove("show");save()};
 document.getElementById("deleteShift").onclick=()=>{delete data.shifts[editingKey];document.getElementById("modal").classList.remove("show");save()};
-document.getElementById("prevMonth").onclick=()=>{current.setMonth(current.getMonth()-1);renderAll()};document.getElementById("nextMonth").onclick=()=>{current.setMonth(current.getMonth()+1);renderAll()};document.getElementById("prevTable").onclick=()=>{current.setMonth(current.getMonth()-1);renderAll()};document.getElementById("nextTable").onclick=()=>{current.setMonth(current.getMonth()+1);renderAll()};
+document.getElementById("prevMonth").onclick=()=>{current.setMonth(current.getMonth()-1);renderAll()};document.getElementById("nextMonth").onclick=()=>{current.setMonth(current.getMonth()+1);renderAll()};document.getElementById("prevTable").onclick=()=>{
+  weekStart.setDate(weekStart.getDate()-7);
+  renderTable();
+};
+
+document.getElementById("nextTable").onclick=()=>{
+  weekStart.setDate(weekStart.getDate()+7);
+  renderTable();
+};
 document.getElementById("prevWeek").onclick=()=>{weekStart.setDate(weekStart.getDate()-7);renderWeek()};document.getElementById("nextWeek").onclick=()=>{weekStart.setDate(weekStart.getDate()+7);renderWeek()};
 document.getElementById("addPerson").onclick=()=>{document.getElementById("personModal").classList.add("show");document.getElementById("newPersonName").value=""};document.getElementById("closePersonModal").onclick=()=>document.getElementById("personModal").classList.remove("show");document.getElementById("savePerson").onclick=()=>{let n=document.getElementById("newPersonName").value.trim();if(!n)return alert("이름을 입력해 주세요.");if(data.staff.includes(n))return alert("이미 등록된 직원입니다.");data.staff.push(n);document.getElementById("personModal").classList.remove("show");save()};
 document.getElementById("personSelect").onchange=renderPersonSummary;document.getElementById("personMonth").onchange=renderPersonSummary;
