@@ -400,6 +400,15 @@ button:active {
 #rosterTable th.saturday {
   color: #548bd6 !important;
 }
+#rosterTable th.sunday,
+#rosterTable th.sunday span {
+  color: #e05265 !important;
+}
+
+#rosterTable th.saturday,
+#rosterTable th.saturday span {
+  color: #548bd6 !important;
+}
 </style>
 </head>
 <body>
@@ -598,8 +607,10 @@ function renderTable(){
     let day=["일","월","화","수","목","금","토"][d.getDay()];
     let cls=d.getDay()===0 || holidays.has(date) ? "sunday" :
             d.getDay()===6 ? "saturday" : "";
-    h+=`<th class="${cls}">${day}<br>${d.getMonth()+1}/${d.getDate()}</th>`;
-  });
+    h+=`<th class="${cls}">
+  <span>${day}</span>
+  <span class="table-date">${d.getMonth()+1}/${d.getDate()}</span>
+</th>`;
 
   h+="</tr></thead><tbody>";
 
