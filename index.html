@@ -24,6 +24,161 @@ select,input{font:inherit;border:1px solid var(--line);border-radius:10px;paddin
 .modalback{position:fixed;inset:0;background:#10182766;display:none;align-items:flex-end;justify-content:center;z-index:10}.modalback.show{display:flex}.modal{width:min(100%,560px);background:white;border-radius:22px 22px 0 0;padding:20px 16px calc(22px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}.modal h3{margin:0 0 14px}.formrow{display:flex;gap:10px;margin:10px 0}.formrow>div{flex:1}.personlist{display:flex;flex-wrap:wrap;gap:7px}.person{border:1px solid var(--line);padding:8px 10px;border-radius:10px;font-size:12px}.person.active{background:var(--bluebg);border-color:#9bbcff;color:#205fca;font-weight:700}
 .empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}.hint{font-size:11px;line-height:1.5;color:var(--muted)}.hidden{display:none!important}
 @media(min-width:650px){.app{padding:28px 22px}.day{min-height:100px;padding:8px}.chip{font-size:11px}.weekday{min-height:250px;padding:9px}}
+
+/* Pastel Lavender Design */
+:root {
+  --bg: #f7f4fc;
+  --card: #ffffff;
+  --ink: #34334b;
+  --muted: #89869f;
+  --line: #eee8f5;
+  --blue: #a99bd8;
+  --bluebg: #f0ebfa;
+  --green: #79b9a3;
+  --shadow: 0 5px 20px rgba(111, 91, 150, .08);
+}
+
+body {
+  background: linear-gradient(160deg, #f4effb, #f5f8ff 55%, #fff8fc);
+}
+
+.app {
+  padding-top: 24px;
+}
+
+.brand {
+  color: #9786c8;
+}
+
+h1 {
+  color: #45405f;
+  letter-spacing: -1px;
+}
+
+.pill {
+  background: #eee9fa;
+  border-color: #e2d9f4;
+  color: #8170b5;
+}
+
+.tabs {
+  background: #eee9f5;
+  border-radius: 17px;
+}
+
+.tabs button {
+  border-radius: 13px;
+  color: #89839c;
+}
+
+.tabs button.active {
+  background: white;
+  color: #7868aa;
+  box-shadow: 0 3px 10px #7868aa18;
+}
+
+.card {
+  border: 1px solid #eee8f5;
+  border-radius: 20px;
+  box-shadow: 0 5px 20px rgba(111, 91, 150, .07);
+}
+
+.primary {
+  background: linear-gradient(135deg, #a99bd8, #91b8df);
+  border-radius: 13px;
+}
+
+.secondary {
+  border-color: #e9e2f2;
+  background: #faf8fd;
+  color: #716b87;
+  border-radius: 13px;
+}
+
+.stat {
+  background: #f2eef9;
+  border-radius: 15px;
+}
+
+.stat b {
+  color: #8271b5;
+}
+
+.day {
+  border-color: #eee8f5;
+  border-radius: 12px;
+}
+
+.day.today {
+  border-color: #a99bd8;
+}
+
+.day.selected {
+  background: #f0ebfa;
+  border-color: #a99bd8;
+}
+
+.chip.D {
+  background: #e8efff;
+  color: #607fc1;
+}
+
+.chip.C {
+  background: #e6f5ed;
+  color: #579879;
+}
+
+.chip.BC {
+  background: #fff0df;
+  color: #bd8950;
+}
+
+.chip.off {
+  background: #f0eff3;
+  color: #85818e;
+}
+
+.chip.V {
+  background: #f1e8fa;
+  color: #9271b7;
+}
+
+.chip.HV {
+  background: #fdeaf1;
+  color: #bd7895;
+}
+
+.chip.HD {
+  background: #e5f4f5;
+  color: #629da1;
+}
+
+.chip.외 {
+  background: #fff0e8;
+  color: #c58b70;
+}
+
+.filter.on,
+.person.active {
+  background: #f0ebfa;
+  border-color: #c9bce8;
+  color: #806eb2;
+}
+
+select,
+input {
+  border-color: #e9e2f2;
+  border-radius: 12px;
+}
+
+.modal {
+  border-radius: 24px 24px 0 0;
+}
+
+.weekday {
+  border-color: #eee8f5;
+  border-radius: 13px;
+}
 </style>
 </head>
 <body>
