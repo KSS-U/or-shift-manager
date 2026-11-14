@@ -141,5 +141,6 @@ document.getElementById("exportData").onclick=()=>{let blob=new Blob([JSON.strin
 document.getElementById("importButton").onclick=()=>document.getElementById("importFile").click();document.getElementById("importFile").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.staff)||!x.shifts)throw 0;data=x;save();alert("백업을 불러왔습니다.")}catch(err){alert("올바른 백업 파일이 아닙니다.")}e.target.value=""};
 renderAll();
 </script>
+<script src="./photo-import-addon.js"></script>
 <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(console.error)); }</script>
 </body></html>
