@@ -179,6 +179,77 @@ input {
   border-color: #eee8f5;
   border-radius: 13px;
 }
+
+/* Pastel finishing touches */
+body {
+  background: linear-gradient(145deg, #f5effb 0%, #f4f7ff 55%, #fff7fb 100%);
+  min-height: 100vh;
+}
+
+.app {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.top {
+  padding: 8px 2px 12px;
+}
+
+.brand {
+  letter-spacing: 2px;
+  color: #9a87c8;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.card {
+  background: rgba(255,255,255,.92);
+  border: 1px solid #eee7f7;
+  border-radius: 22px;
+}
+
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(12px);
+}
+
+.tabs button {
+  font-size: 12px;
+}
+
+.primary {
+  box-shadow: 0 4px 12px rgba(153,132,199,.2);
+}
+
+.day {
+  box-shadow: 0 2px 5px rgba(120,100,160,.04);
+}
+
+.day.today {
+  border: 2px solid #ad9bd8;
+  background: #faf7ff;
+}
+
+.stat {
+  border: 1px solid #eee8f5;
+}
+
+.stat b {
+  color: #8875b7;
+}
+
+button {
+  transition: background .15s ease, transform .15s ease;
+}
+
+button:active {
+  transform: scale(.97);
+}
 </style>
 </head>
 <body>
