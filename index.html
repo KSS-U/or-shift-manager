@@ -703,7 +703,7 @@ function openShift(date,name){
 
   document.getElementById("shiftDate").value=date;
 
-  selectedPeople = new Set(editingKey ? [name] : []);
+ selectedPeople = new Set(name ? [name] : []);
 
   chosenCode = editingKey ? data.shifts[editingKey] : "D";
 
