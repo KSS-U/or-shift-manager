@@ -62,20 +62,17 @@
 
   app.appendChild(view);
 
-  
   // 탭 전환
   btn.onclick = () => {
-    document.querySelectorAll(".tabs button").forEach(b => {
-      b.classList.toggle("active", b === btn);
-    });
+    document.querySelectorAll(".tabs button").forEach(b =>
+      b.classList.toggle("active", b === btn)
+    );
 
-    document.querySelectorAll(".app > section").forEach(el => {
-      el.classList.add("hidden");
+    ["calendar", "table", "week", "people", "photo"].forEach(id => {
+      const el = document.getElementById(id + "View");
+      if (el) el.classList.toggle("hidden", id !== "photo");
     });
-
-    view.classList.remove("hidden");
   };
-
 
   const now = new Date();
 
@@ -169,13 +166,11 @@
       const lastDay = new Date(year, mon, 0).getDate();
 
       // 날짜 숫자 찾기
-      
       const dateWords = words.map(w => {
-        const raw = String(w.text || "").trim();
-        const value = raw.replace(/[^0-9]/g, "");
+        const value = clean(w.text);
 
         return {
-          day: value ? Number(value) : NaN,
+          day: Number(value),
           x: (w.bbox.x0 + w.bbox.x1) / 2,
           y: (w.bbox.y0 + w.bbox.y1) / 2
         };
@@ -184,79 +179,63 @@
         w.day >= 1 &&
         w.day <= lastDay
       );
-            console.log("인식된 날짜 숫자:", dateWords);
-      status.textContent =
-        `날짜 숫자 ${dateWords.length}개 인식됨: ` +
-        dateWords.map(w => w.day).join(", ");
 
-     
-      // 인식된 날짜들의 가로 위치를 이용해 전체 날짜 열 계산
-      const dayPositions = new Map();
+      // 날짜가 있는 가로줄 찾기
+      const clusters = [];
 
-      dateWords.forEach(w => {
-        if (!dayPositions.has(w.day)) {
-          dayPositions.set(w.day, []);
+      dateWords.sort((a, b) => a.y - b.y).forEach(w => {
+        let group = clusters.find(g =>
+          Math.abs(g.y - w.y) < 18
+        );
+
+        if (!group) {
+          group = { y: w.y, items: [] };
+          clusters.push(group);
         }
-        dayPositions.get(w.day).push(w.x);
+
+        group.items.push(w);
+
+        group.y =
+          group.items.reduce((sum, item) => sum + item.y, 0) /
+          group.items.length;
       });
 
-      const points = [...dayPositions.entries()]
-        .map(([day, xs]) => ({
-          day,
-          x: xs.reduce((a, b) => a + b, 0) / xs.length
-        }))
-        .sort((a, b) => a.day - b.day);
-
-      if (points.length < 5) {
-        status.textContent =
-          "날짜를 5개 이상 인식하지 못했습니다. 사진을 확인해 주세요.";
-        return;
-      }
-
-      // 날짜 간 가로 간격의 중앙값 계산
-      const slopes = [];
-
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          const slope =
-            (points[j].x - points[i].x) /
-            (points[j].day - points[i].day);
-
-          if (slope > 0) slopes.push(slope);
-        }
-      }
-
-      const median = arr => {
-        const sorted = [...arr].sort((a, b) => a - b);
-        const mid = Math.floor(sorted.length / 2);
-
-        return sorted.length % 2
-          ? sorted[mid]
-          : (sorted[mid - 1] + sorted[mid]) / 2;
-      };
-
-      const spacing = median(slopes);
-
-      if (!spacing || !Number.isFinite(spacing)) {
-        status.textContent = "날짜 열 간격을 계산하지 못했습니다.";
-        return;
-      }
-
-      const intercept = median(
-        points.map(p => p.x - spacing * p.day)
+      clusters.sort((a, b) =>
+        new Set(b.items.map(w => w.day)).size -
+        new Set(a.items.map(w => w.day)).size
       );
 
-      // 1일부터 말일까지 날짜 열 자동 생성
-      const columns = [];
+      const header = clusters[0];
 
-      for (let day = 1; day <= lastDay; day++) {
-        columns.push({
-          day,
-          x: intercept + spacing * day
-        });
+      if (!header) {
+        status.textContent = "날짜 행을 찾지 못했습니다.";
+        return;
       }
 
-      console.log("자동 생성 날짜 열:", columns);
+      const columns = [];
+
+      header.items
+        .sort((a, b) => a.x - b.x)
+        .forEach(w => {
+          if (!columns.some(c => c.day === w.day)) {
+            columns.push(w);
+          }
+        });
+
+      // 날짜가 빠졌으면 저장 방지
+      const detectedDays = new Set(columns.map(c => c.day));
+
+      const missingDays = [];
+
+      for (let day = 1; day <= lastDay; day++) {
+        if (!detectedDays.has(day)) missingDays.push(day);
+      }
+
+      if (missingDays.length) {
+        status.textContent =
+          `날짜 ${missingDays.join(", ")}일을 찾지 못했습니다. 사진을 확인해 주세요.`;
+        return;
+      }
 
       // 앱에 등록된 직원 이름만 찾기
       const staff = data.staff;
