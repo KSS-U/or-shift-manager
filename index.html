@@ -482,7 +482,80 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchView(b.
 function renderFilters(){let el=document.getElementById("filters");el.innerHTML=CODES.map(c=>`<button class="filter ${activeCodes.has(c)?"on":""}" data-code="${c}">${c}</button>`).join("");el.querySelectorAll("button").forEach(b=>b.onclick=()=>{let c=b.dataset.code;activeCodes.has(c)?activeCodes.delete(c):activeCodes.add(c);renderFilters();renderCalendar();renderDay()})}
 document.getElementById("clearFilters").onclick=()=>{activeCodes.clear();renderFilters();renderCalendar();renderDay()};
 function shown(code){return activeCodes.size===0||activeCodes.has(code)}
-function renderCalendar(){renderFilters();let y=current.getFullYear(),m=current.getMonth();document.getElementById("monthTitle").textContent=fmt(current);let first=new Date(y,m,1),start=(first.getDay()),n=new Date(y,m+1,0).getDate(),html=["일","월","화","수","목","금","토"].map(d=>`<div class="dow">${d}</div>`).join("");for(let i=0;i<start;i++)html+='<div class="day blank"></div>';for(let d=1;d<=n;d++){let date=iso(new Date(y,m,d)),list=entries(date).filter(x=>shown(x.code));let cls="day"+(date===iso(new Date())?" today":"")+(date===selectedDate?" selected":"");html+=`<button class="${cls}" data-date="${date}"><div class="daynum">${d}</div><div class="chips">${list.slice(0,5).map(x=>`<span class="chip ${x.code}">${esc(x.name.slice(0,2))} ${x.code}</span>`).join("")}${list.length>5?`<span class="chip">+${list.length-5}</span>`:""}</div></button>`}document.getElementById("calendar").innerHTML=html;document.querySelectorAll(".day[data-date]").forEach(b=>b.onclick=()=>{selectedDate=b.dataset.date;renderCalendar();renderDay()})}
+function renderCalendar(){
+  renderFilters();
+
+  const holidays = new Set([
+    "2026-01-01",
+    "2026-02-16","2026-02-17","2026-02-18",
+    "2026-03-01","2026-03-02",
+    "2026-05-01","2026-05-05","2026-05-24","2026-05-25",
+    "2026-06-03","2026-06-06","2026-07-17",
+    "2026-08-15","2026-08-17",
+    "2026-09-24","2026-09-25","2026-09-26",
+    "2026-10-03","2026-10-05","2026-10-09",
+    "2026-12-25",
+
+    "2027-01-01",
+    "2027-02-06","2027-02-07","2027-02-08","2027-02-09",
+    "2027-03-01",
+    "2027-05-01","2027-05-03","2027-05-05","2027-05-13",
+    "2027-06-06","2027-07-17","2027-07-19",
+    "2027-08-15","2027-08-16",
+    "2027-09-14","2027-09-15","2027-09-16",
+    "2027-10-03","2027-10-04","2027-10-09","2027-10-11",
+    "2027-12-25","2027-12-27"
+  ]);
+
+  let y=current.getFullYear(),m=current.getMonth();
+  document.getElementById("monthTitle").textContent=fmt(current);
+
+  let first=new Date(y,m,1);
+  let start=first.getDay();
+  let n=new Date(y,m+1,0).getDate();
+
+  let html=["일","월","화","수","목","금","토"]
+    .map(d=>`<div class="dow">${d}</div>`).join("");
+
+  for(let i=0;i<start;i++){
+    html+='<div class="day blank"></div>';
+  }
+
+  for(let d=1;d<=n;d++){
+    let date=iso(new Date(y,m,d));
+    let weekday=new Date(y,m,d).getDay();
+    let list=entries(date).filter(x=>shown(x.code));
+
+    let cls="day";
+
+    if(weekday===0) cls+=" sunday";
+    if(weekday===6) cls+=" saturday";
+    if(holidays.has(date)) cls+=" holiday";
+    if(date===iso(new Date())) cls+=" today";
+    if(date===selectedDate) cls+=" selected";
+
+    html+=`<button class="${cls}" data-date="${date}">
+      <div class="daynum">${d}</div>
+      <div class="chips">
+        ${list.slice(0,5).map(x=>`<span class="chip ${x.code}">${esc(x.name.slice(0,2))} ${x.code}</span>`).join("")}
+        ${list.length>5?`<span class="chip">+${list.length-5}</span>`:""}
+      </div>
+    </button>`;
+  }
+
+  document.getElementById("calendar").innerHTML=html;
+
+  document.querySelectorAll(".day[data-date]").forEach(b=>{
+    b.onclick=()=>{
+      selectedDate=b.dataset.date;
+      renderCalendar();
+      renderDay();
+    };
+  });
+}
+ .day.holiday .daynum {
+  color: #e05265 !important;
+} 
 function renderDay(){let date=parseDate(selectedDate);document.getElementById("dayTitle").textContent=`${date.getMonth()+1}월 ${date.getDate()}일 근무 현황`;let list=entries(selectedDate).filter(x=>shown(x.code));let el=document.getElementById("dayShifts");el.className=list.length?"":"empty";el.innerHTML=list.length?list.map(x=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(x.name)}</b><span class="chip ${x.code}">${x.code}</span><button class="secondary small" data-edit="${esc(x.name)}">수정</button></div>`).join(""):"등록된 근무가 없거나 필터 조건에 맞는 근무가 없습니다.";el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShift(selectedDate,b.dataset.edit))}
 function renderTable(){
   let dates=Array.from({length:7},(_,i)=>{
