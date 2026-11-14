@@ -62,17 +62,20 @@
 
   app.appendChild(view);
 
+  
   // 탭 전환
   btn.onclick = () => {
-    document.querySelectorAll(".tabs button").forEach(b =>
-      b.classList.toggle("active", b === btn)
-    );
-
-    ["calendar", "table", "week", "people", "photo"].forEach(id => {
-      const el = document.getElementById(id + "View");
-      if (el) el.classList.toggle("hidden", id !== "photo");
+    document.querySelectorAll(".tabs button").forEach(b => {
+      b.classList.toggle("active", b === btn);
     });
+
+    document.querySelectorAll(".app > section").forEach(el => {
+      el.classList.add("hidden");
+    });
+
+    view.classList.remove("hidden");
   };
+
 
   const now = new Date();
 
