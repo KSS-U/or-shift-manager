@@ -556,7 +556,15 @@ function renderCalendar(){
     let CODE_ORDER = ["C","BC","외","HD","HV","V","off","D"];
 
 let list=entries(date)
-  .filter(x=>shown(x.code))
+  .filter(x=>{
+    if(activeCodes.size>0) return activeCodes.has(x.code);
+
+    if(weekday===0 || weekday===6){
+      return ["C","BC","외"].includes(x.code);
+    }
+
+    return x.code!=="D";
+  })
   .sort((a,b)=>CODE_ORDER.indexOf(a.code)-CODE_ORDER.indexOf(b.code));
 
     let cls="day";
