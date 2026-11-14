@@ -181,11 +181,12 @@
       );
 
       // 날짜가 있는 가로줄 찾기
+      
       const clusters = [];
 
       dateWords.sort((a, b) => a.y - b.y).forEach(w => {
         let group = clusters.find(g =>
-          Math.abs(g.y - w.y) < 18
+          Math.abs(g.y - w.y) < 40
         );
 
         if (!group) {
@@ -207,12 +208,31 @@
 
       const header = clusters[0];
 
-      if (!header) {
-        status.textContent = "날짜 행을 찾지 못했습니다.";
+      
+      if (!header || header.items.length < 2) {
+        status.textContent = "날짜 행을 찾지 못했습니다. 사진을 확인해 주세요.";
         return;
       }
 
       const columns = [];
+
+      header.items
+        .sort((a, b) => a.x - b.x)
+        .forEach(w => {
+          if (
+            w.day >= 1 &&
+            w.day <= lastDay &&
+            !columns.some(c => c.day === w.day)
+          ) {
+            columns.push(w);
+          }
+        });
+
+      if (columns.length < 2) {
+        status.textContent = "날짜 숫자를 충분히 인식하지 못했습니다.";
+        return;
+      }
+
 
       header.items
         .sort((a, b) => a.x - b.x)
