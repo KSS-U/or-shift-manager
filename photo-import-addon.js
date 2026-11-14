@@ -189,82 +189,74 @@
         `날짜 숫자 ${dateWords.length}개 인식됨: ` +
         dateWords.map(w => w.day).join(", ");
 
-     // 날짜가 있는 가로줄 찾기
-      
-      const clusters = [];
+     
+      // 인식된 날짜들의 가로 위치를 이용해 전체 날짜 열 계산
+      const dayPositions = new Map();
 
-      dateWords.sort((a, b) => a.y - b.y).forEach(w => {
-        let group = clusters.find(g =>
-          Math.abs(g.y - w.y) < 40
-        );
-
-        if (!group) {
-          group = { y: w.y, items: [] };
-          clusters.push(group);
+      dateWords.forEach(w => {
+        if (!dayPositions.has(w.day)) {
+          dayPositions.set(w.day, []);
         }
-
-        group.items.push(w);
-
-        group.y =
-          group.items.reduce((sum, item) => sum + item.y, 0) /
-          group.items.length;
+        dayPositions.get(w.day).push(w.x);
       });
 
-      clusters.sort((a, b) =>
-        new Set(b.items.map(w => w.day)).size -
-        new Set(a.items.map(w => w.day)).size
+      const points = [...dayPositions.entries()]
+        .map(([day, xs]) => ({
+          day,
+          x: xs.reduce((a, b) => a + b, 0) / xs.length
+        }))
+        .sort((a, b) => a.day - b.day);
+
+      if (points.length < 5) {
+        status.textContent =
+          "날짜를 5개 이상 인식하지 못했습니다. 사진을 확인해 주세요.";
+        return;
+      }
+
+      // 날짜 간 가로 간격의 중앙값 계산
+      const slopes = [];
+
+      for (let i = 0; i < points.length; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+          const slope =
+            (points[j].x - points[i].x) /
+            (points[j].day - points[i].day);
+
+          if (slope > 0) slopes.push(slope);
+        }
+      }
+
+      const median = arr => {
+        const sorted = [...arr].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+
+        return sorted.length % 2
+          ? sorted[mid]
+          : (sorted[mid - 1] + sorted[mid]) / 2;
+      };
+
+      const spacing = median(slopes);
+
+      if (!spacing || !Number.isFinite(spacing)) {
+        status.textContent = "날짜 열 간격을 계산하지 못했습니다.";
+        return;
+      }
+
+      const intercept = median(
+        points.map(p => p.x - spacing * p.day)
       );
 
-      const header = clusters[0];
-
-      
-      if (!header || header.items.length < 2) {
-        status.textContent = "날짜 행을 찾지 못했습니다. 사진을 확인해 주세요.";
-        return;
-      }
-
+      // 1일부터 말일까지 날짜 열 자동 생성
       const columns = [];
 
-      header.items
-        .sort((a, b) => a.x - b.x)
-        .forEach(w => {
-          if (
-            w.day >= 1 &&
-            w.day <= lastDay &&
-            !columns.some(c => c.day === w.day)
-          ) {
-            columns.push(w);
-          }
-        });
-
-      if (columns.length < 2) {
-        status.textContent = "날짜 숫자를 충분히 인식하지 못했습니다.";
-        return;
-      }
-
-
-      header.items
-        .sort((a, b) => a.x - b.x)
-        .forEach(w => {
-          if (!columns.some(c => c.day === w.day)) {
-            columns.push(w);
-          }
-        });
-
-      // 날짜가 빠졌으면 저장 방지
-      const detectedDays = new Set(columns.map(c => c.day));
-
-      const missingDays = [];
-
       for (let day = 1; day <= lastDay; day++) {
-        if (!detectedDays.has(day)) missingDays.push(day);
+        columns.push({
+          day,
+          x: intercept + spacing * day
+        });
       }
 
-      if (missingDays.length) {
-        status.textContent =
-          `날짜 ${missingDays.join(", ")}일을 찾지 못했습니다. 사진을 확인해 주세요.`;
-        return;
-      }
+      console.log("자동 생성 날짜 열:", columns);
 
       // 앱에 등록된 직원 이름만 찾기
       const staff = data.staff;
