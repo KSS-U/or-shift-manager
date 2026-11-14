@@ -189,12 +189,7 @@
         `날짜 숫자 ${dateWords.length}개 인식됨: ` +
         dateWords.map(w => w.day).join(", ");
 
-        Number.isInteger(w.day) &&
-        w.day >= 1 &&
-        w.day <= lastDay
-      );
-
-      // 날짜가 있는 가로줄 찾기
+     // 날짜가 있는 가로줄 찾기
       
       const clusters = [];
 
