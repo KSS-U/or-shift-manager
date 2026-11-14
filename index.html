@@ -393,6 +393,10 @@ button:active {
 #calendar .day.saturday .daynum {
   color: #548bd6 !important;
 }
+ #calendar .day:not(.sunday):not(.saturday):not(.holiday) .daynum {
+
+  color: var(--text) !important;
+ }
 #rosterTable th.sunday {
   color: #e05265 !important;
 }
