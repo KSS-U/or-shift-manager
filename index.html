@@ -412,6 +412,18 @@ button:active {
 #rosterTable th.saturday span {
   color: #548bd6 !important;
 }
+#calendar .day:not(.saturday):not(.sunday):not(.holiday) .daynum {
+  color: #333333 !important;
+}
+
+#calendar .day.saturday .daynum {
+  color: #548bd6 !important;
+}
+
+#calendar .day.sunday .daynum,
+#calendar .day.holiday .daynum {
+  color: #e05265 !important;
+}
 </style>
 </head>
 <body>
