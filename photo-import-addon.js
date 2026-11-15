@@ -167,7 +167,7 @@
 
       // 날짜 숫자 찾기
       const dateWords = words.map(w => {
-        const value = clean(w.text);
+        const value = String(w.text || "").replace(/[^\d]/g, "");
 
         return {
           day: Number(value),
