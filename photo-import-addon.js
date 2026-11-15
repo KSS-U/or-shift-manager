@@ -14,24 +14,39 @@
   tab.dataset.view = "photoView";
   tabs.appendChild(tab);
 
-  const view = document.createElement("section");
-  view.id = "photoView";
-  view.className = "view";
-  view.innerHTML = `
-    <div class="card">
-      <h3>사진으로 근무표 등록</h3>
-      <p>엑셀 근무표 캡처 이미지를 선택해 주세요.</p>
-      <input id="photoFile" type="file" accept="image/*">
-      <p style="margin-top:12px">등록할 연월</p>
-      <input id="photoMonth" type="month" style="padding:9px">
-    </div>
 
-    <div class="card">
-      <h3>표 영역 맞추기</h3>
-      <p style="font-size:13px">
-        아래 숫자를 조정해 날짜 칸과 직원별 근무 영역을 맞춰 주세요.
-        미리보기의 선을 기준으로 조정하면 됩니다.
-      </p>
+const view = document.createElement("section");
+view.id = "photoView";
+view.className = "view";
+view.innerHTML = `
+  <div class="card">
+    <h3>사진으로 근무표 등록</h3>
+    <p>엑셀 근무표 캡처 이미지를 선택해 주세요.</p>
+
+    <input
+      id="photoFile"
+      type="file"
+      accept="image/*"
+      style="width:100%;font-size:12px;padding:4px"
+    >
+
+    <p style="margin-top:10px">등록할 연월</p>
+    <input
+      id="photoMonth"
+      type="month"
+      value="${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}"
+      style="padding:6px;font-size:13px;width:150px"
+    >
+  </div>
+
+  <div class="card">
+    <h3>표 영역 맞추기</h3>
+    <p style="font-size:13px">
+      아래 숫자를 조정해 날짜 칸과 직원별 근무 영역을 맞춰 주세요.
+      미리보기의 선을 기준으로 조정하면 됩니다.
+    </p>
+`;
+
       <div id="photoPreviewWrap">
         <canvas id="photoCanvas" style="width:100%;height:auto;border:1px solid #ddd"></canvas>
       </div>
