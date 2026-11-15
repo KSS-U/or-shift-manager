@@ -70,9 +70,12 @@ button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue)
 }
 .chips{
   display:flex;
-  flex-wrap:wrap;
-  gap:3px;
+  flex-wrap:nowrap;
+  gap:4px;
   margin-top:6px;
+  overflow-x:auto;
+  white-space:nowrap;
+  padding-bottom:3px;
 }
 .chip{
   font-size:10px;
