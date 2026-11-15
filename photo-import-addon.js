@@ -1,602 +1,353 @@
 
 (() => {
-  "use strict";
-
   if (document.getElementById("photoView")) return;
 
-  const CODES = ["D", "C", "BC", "외", "off", "V", "HV", "HD"];
+  const tabs = document.querySelector(".tabs");
+  const app = document.querySelector(".app");
+  if (!tabs || !app) {
+    alert("앱 화면을 찾지 못했습니다.");
+    return;
+  }
 
-  let imageFile = null;
-  let imageURL = null;
+  const tab = document.createElement("button");
+  tab.textContent = "사진 등록";
+  tab.dataset.view = "photoView";
+  tabs.appendChild(tab);
+
+  const view = document.createElement("section");
+  view.id = "photoView";
+  view.className = "view";
+  view.innerHTML = `
+    <div class="card">
+      <h3>사진으로 근무표 등록</h3>
+      <p>엑셀 근무표 캡처 이미지를 선택해 주세요.</p>
+      <input id="photoFile" type="file" accept="image/*">
+      <p style="margin-top:12px">등록할 연월</p>
+      <input id="photoMonth" type="month" style="padding:9px">
+    </div>
+
+    <div class="card">
+      <h3>표 영역 맞추기</h3>
+      <p style="font-size:13px">
+        아래 숫자를 조정해 날짜 칸과 직원별 근무 영역을 맞춰 주세요.
+        미리보기의 선을 기준으로 조정하면 됩니다.
+      </p>
+      <div id="photoPreviewWrap">
+        <canvas id="photoCanvas" style="width:100%;height:auto;border:1px solid #ddd"></canvas>
+      </div>
+      <div id="photoControls" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <button id="readPhotoBtn" class="primary" style="width:100%">
+        근무표 읽기
+      </button>
+      <p id="photoStatus" style="font-size:13px"></p>
+    </div>
+
+    <div class="card" id="photoResult" style="display:none">
+      <h3>인식 결과 미리보기</h3>
+      <p style="font-size:13px">
+        저장 전에 직원별 근무를 확인해 주세요.
+        인식하지 못한 칸은 off로 표시됩니다.
+      </p>
+      <div id="photoTable" style="overflow-x:auto"></div>
+      <button id="savePhotoBtn" class="primary" style="width:100%;margin-top:14px">
+        확인 후 저장
+      </button>
+    </div>
+  `;
+  app.appendChild(view);
+
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".view").forEach(v => v.style.display = "none");
+    view.style.display = "block";
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+    tab.classList.add("active");
+  });
+
+  const $ = id => document.getElementById(id);
+  let photo = null;
+  let results = [];
   let worker = null;
-  let month = "";
-  let lastDay = 0;
-  let staffRows = [];
-  let previewRows = [];
-  let grid = null;
 
-  const pad = n => String(n).padStart(2, "0");
+  const settings = {
+    dateStart: 20,
+    right: 98,
+    staffTop: 28,
+    staffBottom: 96
+  };
 
-  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#39;"
-  })[c]);
+  const controls = [
+    ["dateStart", "첫 날짜 칸의 왼쪽 위치"],
+    ["right", "마지막 날짜 칸의 오른쪽 위치"],
+    ["staffTop", "첫 직원 근무칸의 위쪽 위치"],
+    ["staffBottom", "마지막 직원 근무칸의 아래쪽 위치"]
+  ];
 
-  function status(message) {
-    document.getElementById("photoStatus").textContent = message;
-  }
+  $("photoControls").innerHTML = controls.map(([id, label]) => `
+    <div style="margin:12px 0">
+      <label for="range_${id}" style="display:block;font-weight:600">
+        ${label}: <span id="value_${id}">${settings[id]}%</span>
+      </label>
+      <input id="range_${id}" type="range" min="0" max="100" value="${settings[id]}" style="width:100%">
+    </div>
+  `).join("");
 
-  function getStaff() {
-    return Array.isArray(data.staff) ? [...data.staff] : [];
-  }
-
-  function addInterface() {
-    const tabs = document.querySelector(".tabs");
-    const app = document.querySelector(".app");
-
-    if (!tabs || !app) {
-      alert("앱 화면을 찾지 못했습니다.");
-      return;
-    }
-
-    const tab = document.createElement("button");
-    tab.type = "button";
-    tab.textContent = "사진 등록";
-    tab.dataset.view = "photoView";
-    tabs.appendChild(tab);
-
-    const view = document.createElement("section");
-    view.className = "view";
-    view.id = "photoView";
-
-    view.innerHTML = `
-      <div class="card" style="padding:14px;">
-        <h3 style="margin-top:0;">근무표 사진 등록</h3>
-
-        <label>근무표 월</label>
-        <input id="photoMonth" type="month"
-          value="${new Date().getFullYear()}-${pad(new Date().getMonth()+1)}"
-          style="width:100%;margin:7px 0 12px;">
-
-        <label>사진 선택</label>
-        <input id="photoFile" type="file"
-          accept="image/*" style="width:100%;margin:7px 0;">
-
-        <img id="photoImage"
-          style="display:none;width:100%;max-height:320px;
-          object-fit:contain;margin-top:10px;border-radius:8px;">
-
-        <button type="button" id="photoRead"
-          class="primary" style="width:100%;margin-top:12px;">
-          근무표 읽기
-        </button>
-
-        <div id="photoStatus"
-          style="white-space:pre-line;font-size:13px;margin-top:12px;">
-          월과 사진을 선택해 주세요.
-        </div>
-      </div>
-
-      <div class="card" id="photoPreviewCard"
-        style="display:none;padding:12px;margin-top:12px;">
-        <h3>근무표 미리보기</h3>
-        <p style="font-size:12px;">
-          인식하지 못한 칸은 off로 표시됩니다.
-          저장 전 근무코드를 직접 수정할 수 있습니다.
-        </p>
-        <div style="overflow-x:auto;">
-          <table id="photoTable"
-            style="border-collapse:collapse;min-width:100%;font-size:11px;">
-          </table>
-        </div>
-        <button type="button" id="photoSave"
-          class="primary" style="width:100%;margin-top:14px;">
-          확인 후 저장
-        </button>
-      </div>
-    `;
-
-    app.appendChild(view);
-
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".view").forEach(el => {
-        el.classList.toggle("active", el.id === "photoView");
-      });
-
-      tabs.querySelectorAll("button").forEach(el => {
-        el.classList.toggle("active", el === tab);
-      });
+  controls.forEach(([id]) => {
+    $("range_" + id).addEventListener("input", e => {
+      settings[id] = Number(e.target.value);
+      $("value_" + id).textContent = settings[id] + "%";
+      drawPreview();
     });
+  });
 
-    document.getElementById("photoFile").addEventListener("change", e => {
-      imageFile = e.target.files?.[0] || null;
+  function drawPreview() {
+    if (!photo) return;
+    const canvas = $("photoCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = photo.naturalWidth;
+    canvas.height = photo.naturalHeight;
+    ctx.drawImage(photo, 0, 0);
 
-      const img = document.getElementById("photoImage");
-
-      if (imageURL) URL.revokeObjectURL(imageURL);
-
-      if (imageFile) {
-        imageURL = URL.createObjectURL(imageFile);
-        img.src = imageURL;
-        img.style.display = "block";
-        status("사진이 등록되었습니다. 근무표 읽기를 눌러 주세요.");
-      }
-
-      document.getElementById("photoPreviewCard").style.display = "none";
-      previewRows = [];
-      grid = null;
-    });
-
-    document.getElementById("photoRead").addEventListener("click", readPhoto);
-    document.getElementById("photoSave").addEventListener("click", savePhoto);
-  }
-
-  function findPeaks(projection) {
-    const max = Math.max(...projection);
-
-    if (!max) return [];
-
-    const threshold = Math.max(8, max * 0.48);
-    const peaks = [];
-
-    let start = -1;
-    let end = -1;
-
-    for (let i = 0; i < projection.length; i++) {
-      if (projection[i] >= threshold) {
-        if (start < 0) start = i;
-        end = i;
-      } else if (start >= 0) {
-        if (end - start <= 8) {
-          let weighted = 0;
-          let total = 0;
-
-          for (let j = start; j <= end; j++) {
-            weighted += j * projection[j];
-            total += projection[j];
-          }
-
-          peaks.push(Math.round(weighted / total));
-        }
-
-        start = -1;
-        end = -1;
-      }
-    }
-
-    if (start >= 0 && end - start <= 8) {
-      let weighted = 0;
-      let total = 0;
-
-      for (let j = start; j <= end; j++) {
-        weighted += j * projection[j];
-        total += projection[j];
-      }
-
-      peaks.push(Math.round(weighted / total));
-    }
-
-    return peaks;
-  }
-
-  function detectProjections(canvas) {
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     const w = canvas.width;
     const h = canvas.height;
-    const pixels = ctx.getImageData(0, 0, w, h).data;
+    const x1 = w * settings.dateStart / 100;
+    const x2 = w * settings.right / 100;
+    const y1 = h * settings.staffTop / 100;
+    const y2 = h * settings.staffBottom / 100;
 
-    const vertical = new Array(w).fill(0);
-    const horizontal = new Array(h).fill(0);
+    ctx.save();
+    ctx.strokeStyle = "#e53935";
+    ctx.lineWidth = Math.max(2, w / 700);
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
-    // 사진의 밝은 배경과 어두운 표 선을 구분
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const i = (y * w + x) * 4;
-        const gray = (
-          pixels[i] * 0.299 +
-          pixels[i + 1] * 0.587 +
-          pixels[i + 2] * 0.114
-        );
-
-        if (gray < 235) {
-          vertical[x]++;
-          horizontal[y]++;
-        }
-      }
-    }
-
-    return {
-      vertical: findPeaks(vertical),
-      horizontal: findPeaks(horizontal)
-    };
-  }
-
-  function coefficient(values) {
-    if (!values.length) return 999;
-
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    if (!mean) return 999;
-
-    const variance = values.reduce(
-      (sum, v) => sum + (v - mean) ** 2, 0
-    ) / values.length;
-
-    return Math.sqrt(variance) / mean;
-  }
-
-  function chooseVertical(lines, needed) {
-    let best = null;
-    let bestScore = Infinity;
-
-    for (let i = 0; i <= lines.length - needed; i++) {
-      const part = lines.slice(i, i + needed);
-      const gaps = part.slice(1).map((v, j) => v - part[j]);
-
-      const dateGaps = gaps.slice(1);
-      const cv = coefficient(dateGaps);
-      const mean = dateGaps.reduce((a, b) => a + b, 0) / dateGaps.length;
-      const firstRatio = gaps[0] / mean;
-
-      if (firstRatio < 1.2 || firstRatio > 7) continue;
-      if (cv > 0.30) continue;
-
-      const score = cv + Math.abs(firstRatio - 2.5) * 0.025;
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = part;
-      }
-    }
-
-    return best;
-  }
-
-  function chooseHorizontal(lines, needed) {
-    let best = null;
-    let bestScore = Infinity;
-
-    for (let i = 0; i <= lines.length - needed; i++) {
-      const part = lines.slice(i, i + needed);
-      const gaps = part.slice(1).map((v, j) => v - part[j]);
-      const cv = coefficient(gaps);
-
-      if (Math.min(...gaps) < 8 || cv > 0.40) continue;
-
-      if (cv < bestScore) {
-        bestScore = cv;
-        best = part;
-      }
-    }
-
-    return best;
-  }
-
-  function detectGrid(canvas) {
-    const peaks = detectProjections(canvas);
-    const staff = getStaff();
-
-    const vertical = chooseVertical(
-      peaks.vertical,
-      lastDay + 2
-    );
-
-    const horizontal = chooseHorizontal(
-      peaks.horizontal,
-      9
-    );
-
-    if (!vertical || !horizontal) {
-      return null;
-    }
-
-    return {
-      vertical,
-      horizontal,
-      staffCount: staff.length
-    };
-  }
-
-  function getCode(raw) {
-    const value = String(raw || "").trim();
-    const upper = value.toUpperCase().replace(/[^A-Z]/g, "");
-
-    if (value.includes("예비군")) return "off";
-    if (value.includes("외")) return "외";
-
-    if (upper.includes("BC")) return "BC";
-    if (upper.includes("HV")) return "HV";
-    if (upper.includes("HD")) return "HD";
-    if (upper.includes("OFF")) return "off";
-
-    if (upper.includes("D")) return "D";
-    if (upper.includes("C")) return "C";
-    if (upper.includes("V")) return "V";
-
-    return "off";
-  }
-
-  async function loadWorker() {
-    if (worker) return;
-
-    if (!window.Tesseract) {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src =
-          "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-        script.onload = resolve;
-        script.onerror = () => reject(
-          new Error("OCR 프로그램을 불러오지 못했습니다.")
-        );
-        document.head.appendChild(script);
-      });
-    }
-
-    worker = await Tesseract.createWorker("kor+eng");
-
-    await worker.setParameters({
-      tessedit_pageseg_mode: "8",
-      tessedit_char_whitelist:
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz예비군외"
-    });
-  }
-
-  async function readCell(ctx, x0, y0, x1, y1) {
-    const marginX = (x1 - x0) * 0.12;
-    const marginY = (y1 - y0) * 0.12;
-
-    const left = x0 + marginX;
-    const top = y0 + marginY;
-    const width = x1 - x0 - marginX * 2;
-    const height = y1 - y0 - marginY * 2;
-
-    if (width < 2 || height < 2) return "off";
-
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(width * 4);
-    canvas.height = Math.round(height * 4);
-
-    const c = canvas.getContext("2d", { willReadFrequently: true });
-
-    c.drawImage(
-      document.getElementById("photoImage"),
-      left, top, width, height,
-      0, 0, canvas.width, canvas.height
-    );
-
-    const image = c.getImageData(0, 0, canvas.width, canvas.height);
-    const p = image.data;
-
-    for (let i = 0; i < p.length; i += 4) {
-      const gray = (
-        p[i] * 0.299 +
-        p[i + 1] * 0.587 +
-        p[i + 2] * 0.114
-      );
-
-      const v = gray < 185 ? 0 : 255;
-      p[i] = p[i + 1] = p[i + 2] = v;
-    }
-
-    c.putImageData(image, 0, 0);
-
-    const result = await worker.recognize(canvas);
-    return getCode(result.data.text);
-  }
-
-  async function readPhoto() {
-    const button = document.getElementById("photoRead");
-    const monthInput = document.getElementById("photoMonth");
-
-    if (!imageFile) {
-      alert("먼저 근무표 사진을 선택해 주세요.");
-      return;
-    }
-
-    month = monthInput.value;
-
-    if (!month) {
-      alert("근무표 월을 선택해 주세요.");
-      return;
-    }
-
-    const staff = getStaff();
-
-    if (staff.length !== 6) {
-      alert("등록된 직원이 6명인지 확인해 주세요.");
-      return;
-    }
-
-    lastDay = new Date(
+    const month = $("photoMonth").value;
+    const days = month ? new Date(
       Number(month.slice(0, 4)),
       Number(month.slice(5, 7)),
       0
-    ).getDate();
+    ).getDate() : 31;
 
-    button.disabled = true;
-    document.getElementById("photoPreviewCard").style.display = "none";
-
-    try {
-      status("사진의 표 구분선을 찾고 있습니다.");
-
-      const img = document.getElementById("photoImage");
-      await img.decode();
-
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      canvas.getContext("2d").drawImage(img, 0, 0);
-
-      grid = detectGrid(canvas);
-
-      if (!grid) {
-        status(
-          "표의 격자선을 정확하게 찾지 못했습니다.\n" +
-          "잘못된 근무표를 만드는 것을 막기 위해 중단했습니다.\n" +
-          "저장된 근무 데이터는 변경되지 않았습니다."
-        );
-        return;
-      }
-
-      status(
-        "표의 칸을 찾았습니다.\n" +
-        "직원 6명, 날짜 " + lastDay + "일을 읽고 있습니다."
-      );
-
-      await loadWorker();
-
-      const staff = getStaff();
-      const v = grid.vertical;
-      const h = grid.horizontal;
-
-      previewRows = [];
-
-      for (let r = 0; r < 6; r++) {
-        const days = {};
-
-        // A3~A8 직원 행의 오른쪽 B열부터 읽기
-        const rowTop = h[r + 2];
-        const rowBottom = h[r + 3];
-
-        for (let day = 1; day <= lastDay; day++) {
-          const col = day;
-
-          status(
-            `${staff[r]} 근무 인식 중...\n` +
-            `${day}/${lastDay}일`
-          );
-
-          days[day] = await readCell(
-            canvas.getContext("2d"),
-            v[col],
-            rowTop,
-            v[col + 1],
-            rowBottom
-          );
-        }
-
-        previewRows.push({
-          name: staff[r],
-          days
-        });
-      }
-
-      renderPreview();
-
-      status(
-        "인식이 끝났습니다.\n" +
-        "직원 6명 × " + lastDay + "일을 미리보기로 만들었습니다.\n" +
-        "근무코드를 확인하고 수정한 뒤 저장해 주세요."
-      );
-
-    } catch (error) {
-      console.error(error);
-      status("사진 인식 오류:\n" + error.message);
-    } finally {
-      button.disabled = false;
+    ctx.strokeStyle = "#1976d2";
+    for (let i = 1; i < days; i++) {
+      const x = x1 + (x2 - x1) * i / days;
+      ctx.beginPath();
+      ctx.moveTo(x, y1);
+      ctx.lineTo(x, y2);
+      ctx.stroke();
     }
+
+    ctx.strokeStyle = "#16a05d";
+    for (let i = 1; i < 6; i++) {
+      const y = y1 + (y2 - y1) * i / 6;
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
-  function renderPreview() {
-    const card = document.getElementById("photoPreviewCard");
-    const table = document.getElementById("photoTable");
+  $("photoFile").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    let html = `
-      <thead><tr>
-        <th style="position:sticky;left:0;background:#eee;padding:5px;">
-          직원
-        </th>
-        ${Array.from({ length: lastDay }, (_, i) =>
-          `<th style="padding:4px;background:#eee;">${i + 1}</th>`
-        ).join("")}
-      </tr></thead><tbody>
-    `;
+    photo = new Image();
+    photo.onload = () => {
+      drawPreview();
+      $("photoStatus").textContent = "사진을 불러왔습니다. 빨간 영역과 칸 구분선을 맞춰 주세요.";
+      $("photoResult").style.display = "none";
+    };
+    photo.onerror = () => alert("사진을 불러오지 못했습니다.");
+    photo.src = URL.createObjectURL(file);
+  });
 
-    previewRows.forEach((row, r) => {
-      html += `
-        <tr>
-          <th style="position:sticky;left:0;background:white;
-            padding:4px;border:1px solid #ddd;white-space:nowrap;">
-            ${esc(row.name)}
-          </th>
-      `;
+  $("photoMonth").addEventListener("change", drawPreview);
 
-      for (let day = 1; day <= lastDay; day++) {
-        html += `
-          <td style="padding:2px;border:1px solid #ddd;">
-            <select data-row="${r}" data-day="${day}"
-              style="width:40px;min-width:40px;padding:3px 0;
-              font-size:10px;border:0;background:transparent;">
-              ${CODES.map(code => `
-                <option value="${code}"
-                  ${row.days[day] === code ? "selected" : ""}>
-                  ${code}
-                </option>
-              `).join("")}
-            </select>
-          </td>
-        `;
-      }
-
-      html += "</tr>";
-    });
-
-    html += "</tbody>";
-    table.innerHTML = html;
-
-    table.querySelectorAll("select[data-row]").forEach(select => {
-      select.addEventListener("change", () => {
-        const row = Number(select.dataset.row);
-        const day = Number(select.dataset.day);
-        previewRows[row].days[day] = select.value;
-      });
-    });
-
-    card.style.display = "block";
+  function getCode(raw) {
+    const t = String(raw || "").toUpperCase().replace(/\s/g, "");
+    if (t.includes("BC")) return "BC";
+    if (t.includes("HV")) return "HV";
+    if (t.includes("HD")) return "HD";
+    if (t.includes("OFF")) return "off";
+    if (t.includes("외")) return "외";
+    if (/\bD\b/.test(t) || t === "D") return "D";
+    if (/\bC\b/.test(t) || t === "C") return "C";
+    if (/\bV\b/.test(t) || t === "V") return "V";
+    return "off";
   }
 
-  function savePhoto() {
-    if (previewRows.length !== 6) {
-      alert("직원 6명의 미리보기를 먼저 만들어 주세요.");
+  async function readOneCell(x, y, width, height) {
+    const c = document.createElement("canvas");
+    c.width = 180;
+    c.height = 100;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.drawImage(
+      photo,
+      x, y, width, height,
+      8, 8, c.width - 16, c.height - 16
+    );
+
+    const result = await worker.recognize(c);
+    return getCode(result.data.text);
+  }
+
+  $("readPhotoBtn").addEventListener("click", async () => {
+    const month = $("photoMonth").value;
+    if (!photo) {
+      alert("먼저 근무표 사진을 선택해 주세요.");
+      return;
+    }
+    if (!month) {
+      alert("등록할 연월을 선택해 주세요.");
+      return;
+    }
+    if (!Array.isArray(data.staff) || data.staff.length !== 6) {
+      alert("현재 등록된 직원이 6명인지 확인해 주세요.");
       return;
     }
 
-    let existing = 0;
+    const year = Number(month.slice(0, 4));
+    const mon = Number(month.slice(5, 7));
+    const days = new Date(year, mon, 0).getDate();
 
-    previewRows.forEach(row => {
-      for (let day = 1; day <= lastDay; day++) {
-        const date = `${month}-${pad(day)}`;
-        if (data.shifts[key(date, row.name)] !== undefined) {
-          existing++;
-        }
+    const x1 = photo.naturalWidth * settings.dateStart / 100;
+    const x2 = photo.naturalWidth * settings.right / 100;
+    const y1 = photo.naturalHeight * settings.staffTop / 100;
+    const y2 = photo.naturalHeight * settings.staffBottom / 100;
+
+    if (x2 <= x1 || y2 <= y1) {
+      alert("표 영역 위치를 다시 조정해 주세요.");
+      return;
+    }
+
+    $("readPhotoBtn").disabled = true;
+    $("photoStatus").textContent = "OCR 준비 중입니다. 잠시 기다려 주세요.";
+
+    try {
+      if (!window.Tesseract) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
       }
+
+      if (!worker) {
+        worker = await Tesseract.createWorker("kor+eng");
+      }
+
+      results = [];
+      for (let r = 0; r < 6; r++) {
+        const staffName = data.staff[r];
+        const rowTop = y1 + (y2 - y1) * r / 6;
+        const rowBottom = y1 + (y2 - y1) * (r + 1) / 6;
+        const row = [];
+
+        for (let d = 1; d <= days; d++) {
+          const colLeft = x1 + (x2 - x1) * (d - 1) / days;
+          const colRight = x1 + (x2 - x1) * d / days;
+
+          const marginX = (colRight - colLeft) * 0.12;
+          const marginY = (rowBottom - rowTop) * 0.12;
+
+          $("photoStatus").textContent =
+            `${staffName} · ${d}/${days}일 인식 중...`;
+
+          const code = await readOneCell(
+            colLeft + marginX,
+            rowTop + marginY,
+            colRight - colLeft - marginX * 2,
+            rowBottom - rowTop - marginY * 2
+          );
+          row.push(code);
+        }
+        results.push({ name: staffName, codes: row });
+      }
+
+      renderResults(year, mon, days);
+      $("photoStatus").textContent = "인식이 끝났습니다. 결과를 확인해 주세요.";
+      $("photoResult").style.display = "block";
+    } catch (err) {
+      console.error(err);
+      alert("사진 인식 중 오류가 발생했습니다: " + (err.message || err));
+      $("photoStatus").textContent = "인식에 실패했습니다.";
+    } finally {
+      $("readPhotoBtn").disabled = false;
+    }
+  });
+
+  function renderResults(year, mon, days) {
+    let html = `<table style="border-collapse:collapse;white-space:nowrap;font-size:12px">
+      <tr><th style="padding:6px;border:1px solid #ccc">직원</th>`;
+    for (let d = 1; d <= days; d++) {
+      html += `<th style="padding:5px;border:1px solid #ccc">${d}</th>`;
+    }
+    html += "</tr>";
+
+    results.forEach((row, r) => {
+      html += `<tr><th style="padding:6px;border:1px solid #ccc">${row.name}</th>`;
+      row.codes.forEach((code, d) => {
+        html += `<td style="padding:5px;border:1px solid #ccc">
+          <select data-row="${r}" data-day="${d}" style="font-size:12px">
+            ${["D","C","BC","외","off","V","HV","HD"].map(c =>
+              `<option value="${c}" ${c === code ? "selected" : ""}>${c}</option>`
+            ).join("")}
+          </select>
+        </td>`;
+      });
+      html += "</tr>";
     });
 
-    const total = previewRows.length * lastDay;
+    html += "</table>";
+    $("photoTable").innerHTML = html;
 
-    const message =
-      `${month} 근무표를 저장할까요?\n\n` +
-      `직원: 6명\n날짜: 1일~${lastDay}일\n` +
-      `저장 칸: ${total}개\n` +
-      `기존 근무 기록 덮어쓰기: ${existing}개\n\n` +
-      `미리보기에서 확인한 내용으로 저장합니다.`;
+    $("photoTable").querySelectorAll("select").forEach(select => {
+      select.addEventListener("change", () => {
+        const r = Number(select.dataset.row);
+        const d = Number(select.dataset.day);
+        results[r].codes[d] = select.value;
+      });
+    });
+  }
 
-    if (!confirm(message)) return;
+  $("savePhotoBtn").addEventListener("click", () => {
+    if (!results.length) return;
 
-    previewRows.forEach(row => {
-      for (let day = 1; day <= lastDay; day++) {
-        const date = `${month}-${pad(day)}`;
-        const code = CODES.includes(row.days[day])
-          ? row.days[day]
-          : "off";
+    const month = $("photoMonth").value;
+    const year = Number(month.slice(0, 4));
+    const mon = Number(month.slice(5, 7));
+    const days = new Date(year, mon, 0).getDate();
 
+    let overwrite = 0;
+    results.forEach(row => {
+      row.codes.forEach((code, i) => {
+        const date = `${year}-${String(mon).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
+        if (data.shifts[key(date, row.name)] !== undefined) overwrite++;
+      });
+    });
+
+    if (!confirm(
+      `기존 근무 기록 ${overwrite}건을 덮어쓸 수 있습니다.\n` +
+      `${results.length}명, ${days}일 근무표를 저장할까요?`
+    )) return;
+
+    results.forEach(row => {
+      row.codes.forEach((code, i) => {
+        const date = `${year}-${String(mon).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
         data.shifts[key(date, row.name)] = code;
-      }
+      });
     });
 
     save();
     alert("근무표 저장이 완료되었습니다.");
-  }
+    $("photoResult").style.display = "none";
+  });
 
-  addInterface();
 })();
