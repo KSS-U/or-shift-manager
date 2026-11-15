@@ -895,6 +895,7 @@ document.getElementById("closeModal").onclick=()=>{
   document.getElementById("modal").classList.remove("show");
   selectedPeople.clear();
   editingKey=null;
+  excelEntryMode=false;
 };
 
 document.getElementById("deleteShift").onclick=()=>{delete data.shifts[editingKey];document.getElementById("modal").classList.remove("show");save()};
