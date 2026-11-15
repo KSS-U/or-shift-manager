@@ -783,6 +783,61 @@ document.getElementById("saveShift").onclick=()=>{
   save();
 };
 
+function renderCodeChoices(){
+  const el=document.getElementById("codeChoices");
+
+  el.innerHTML=CODES.map(code=>`
+    <button type="button"
+      class="filter ${chosenCode===code?"on":""}"
+      data-code="${esc(code)}">${esc(code)}</button>
+  `).join("");
+
+  el.querySelectorAll("[data-code]").forEach(b=>{
+    b.onclick=()=>{
+      chosenCode=b.dataset.code;
+      renderCodeChoices();
+    };
+  });
+}
+
+function openShift(date,name){
+  editingKey = name && data.shifts[key(date,name)]
+    ? key(date,name) : null;
+
+  document.getElementById("shiftDate").value=date;
+
+  selectedPeople = new Set(name ? [name] : []);
+
+  chosenCode = editingKey ? data.shifts[editingKey] : "D";
+
+  document.getElementById("deleteShift").style.display =
+    editingKey ? "block" : "none";
+
+  document.getElementById("modalTitle").textContent =
+    editingKey ? "근무 수정" : "근무 입력";
+
+  renderStaffChoices();
+  renderCodeChoices();
+
+  document.getElementById("modal").classList.add("show");
+}
+
+document.getElementById("selectAllPeople").onclick=()=>{
+  selectedPeople=new Set(data.staff);
+  renderStaffChoices();
+};
+
+document.getElementById("clearAllPeople").onclick=()=>{
+  selectedPeople.clear();
+  renderStaffChoices();
+};
+
+document.getElementById("closeModal").onclick=()=>{
+  document.getElementById("modal").classList.remove("show");
+  selectedPeople.clear();
+  editingKey=null;
+};
+
 document.getElementById("deleteShift").onclick=()=>{delete data.shifts[editingKey];document.getElementById("modal").classList.remove("show");save()};
 document.getElementById("prevMonth").onclick=()=>{current.setMonth(current.getMonth()-1);renderAll()};document.getElementById("nextMonth").onclick=()=>{current.setMonth(current.getMonth()+1);renderAll()};document.getElementById("prevTable").onclick=()=>{
   weekStart.setDate(weekStart.getDate()-7);
