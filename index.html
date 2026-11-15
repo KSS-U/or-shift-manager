@@ -86,8 +86,15 @@ button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue)
   white-space:nowrap;
   line-height:1.15;
 }
-.filters{display:flex;gap:7px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:white;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700}.filter.on{border-color:#8bb2ff;background:var(--bluebg);color:#205fca}
-.tablewrap{
+.filters{
+  display:flex;
+  gap:5px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  white-space:nowrap;
+  -webkit-overflow-scrolling:touch;
+}
+  .tablewrap{
   width:100%;
   overflow-x:hidden;
 }
