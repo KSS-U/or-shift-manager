@@ -1,37 +1,33 @@
+
 (() => {
   "use strict";
 
   if (document.getElementById("photoView")) return;
 
-  const staff = [...data.staff];
-  const codes = ["D", "C", "BC", "외", "off", "V", "HV", "HD"];
+  const CODES = ["D", "C", "BC", "외", "off", "V", "HV", "HD"];
 
   let imageFile = null;
-  let detectedWords = [];
-  let dateColumns = [];
-  let detectedRows = [];
-  let previewRows = [];
+  let imageURL = null;
+  let worker = null;
   let month = "";
   let lastDay = 0;
-
-  const clean = value =>
-    String(value || "")
-      .replace(/[^a-zA-Z가-힣0-9]/g, "")
-      .toLowerCase();
-
-  const escapeHTML = value =>
-    String(value ?? "").replace(/[&<>"']/g, ch => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[ch]);
+  let staffRows = [];
+  let previewRows = [];
+  let grid = null;
 
   const pad = n => String(n).padStart(2, "0");
 
-  function setStatus(message) {
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
+
+  function status(message) {
     document.getElementById("photoStatus").textContent = message;
+  }
+
+  function getStaff() {
+    return Array.isArray(data.staff) ? [...data.staff] : [];
   }
 
   function addInterface() {
@@ -58,439 +54,480 @@
         <h3 style="margin-top:0;">근무표 사진 등록</h3>
 
         <label>근무표 월</label>
-        <input type="month" id="photoMonth"
+        <input id="photoMonth" type="month"
           value="${new Date().getFullYear()}-${pad(new Date().getMonth()+1)}"
-          style="width:100%;margin:6px 0 12px;">
+          style="width:100%;margin:7px 0 12px;">
 
-        <label>근무표 사진 선택</label>
-        <input type="file" id="photoFile"
-          accept="image/*" style="width:100%;margin:6px 0 12px;">
+        <label>사진 선택</label>
+        <input id="photoFile" type="file"
+          accept="image/*" style="width:100%;margin:7px 0;">
 
         <img id="photoImage"
-          style="display:none;width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin:8px 0;">
+          style="display:none;width:100%;max-height:320px;
+          object-fit:contain;margin-top:10px;border-radius:8px;">
 
-        <button type="button" id="photoRead" class="primary"
-          style="width:100%;margin-top:8px;">
-          사진 읽기
+        <button type="button" id="photoRead"
+          class="primary" style="width:100%;margin-top:12px;">
+          근무표 읽기
         </button>
 
         <div id="photoStatus"
-          style="white-space:pre-line;margin-top:12px;font-size:13px;">
-          월을 선택하고 근무표 사진을 등록해 주세요.
+          style="white-space:pre-line;font-size:13px;margin-top:12px;">
+          월과 사진을 선택해 주세요.
         </div>
       </div>
 
-      <div class="card" id="photoMappingCard"
-        style="display:none;padding:14px;margin-top:12px;">
-        <h3 style="margin-top:0;">직원 행 확인</h3>
-        <p style="font-size:13px;">
-          사진에서 찾은 직원 행을 등록된 직원과 연결해 주세요.
-          사진에 없는 직원이나 추가 직원은 선택하지 않아도 됩니다.
-        </p>
-        <div id="photoMappings"></div>
-      </div>
-
       <div class="card" id="photoPreviewCard"
-        style="display:none;padding:14px;margin-top:12px;">
-        <h3 style="margin-top:0;">근무표 미리보기</h3>
+        style="display:none;padding:12px;margin-top:12px;">
+        <h3>근무표 미리보기</h3>
         <p style="font-size:12px;">
-          각 칸의 근무코드를 눌러 수정할 수 있습니다.
-          빈칸과 판독되지 않은 코드는 off로 표시됩니다.
+          인식하지 못한 칸은 off로 표시됩니다.
+          저장 전 근무코드를 직접 수정할 수 있습니다.
         </p>
-
         <div style="overflow-x:auto;">
           <table id="photoTable"
             style="border-collapse:collapse;min-width:100%;font-size:11px;">
           </table>
         </div>
-
         <button type="button" id="photoSave"
           class="primary" style="width:100%;margin-top:14px;">
-          확인 후 근무표 저장
+          확인 후 저장
         </button>
       </div>
-
-      <details style="margin:12px 0;padding:10px;">
-        <summary>OCR 인식 결과 확인</summary>
-        <textarea id="photoText" rows="8" readonly
-          style="width:100%;margin-top:8px;font-size:11px;"></textarea>
-      </details>
     `;
 
     app.appendChild(view);
 
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".view").forEach(el =>
-        el.classList.toggle("active", el.id === "photoView")
-      );
+      document.querySelectorAll(".view").forEach(el => {
+        el.classList.toggle("active", el.id === "photoView");
+      });
 
-      tabs.querySelectorAll("button").forEach(el =>
-        el.classList.toggle("active", el === tab)
-      );
+      tabs.querySelectorAll("button").forEach(el => {
+        el.classList.toggle("active", el === tab);
+      });
     });
 
-    document.getElementById("photoFile").addEventListener("change", event => {
-      imageFile = event.target.files?.[0] || null;
+    document.getElementById("photoFile").addEventListener("change", e => {
+      imageFile = e.target.files?.[0] || null;
 
       const img = document.getElementById("photoImage");
 
+      if (imageURL) URL.revokeObjectURL(imageURL);
+
       if (imageFile) {
-        img.src = URL.createObjectURL(imageFile);
+        imageURL = URL.createObjectURL(imageFile);
+        img.src = imageURL;
         img.style.display = "block";
-        setStatus("사진이 등록되었습니다. 사진 읽기를 눌러 주세요.");
-      } else {
-        img.style.display = "none";
+        status("사진이 등록되었습니다. 근무표 읽기를 눌러 주세요.");
       }
 
-      document.getElementById("photoMappingCard").style.display = "none";
       document.getElementById("photoPreviewCard").style.display = "none";
+      previewRows = [];
+      grid = null;
     });
 
     document.getElementById("photoRead").addEventListener("click", readPhoto);
     document.getElementById("photoSave").addEventListener("click", savePhoto);
   }
 
-  function loadTesseract() {
-    return new Promise((resolve, reject) => {
-      if (window.Tesseract) {
-        resolve();
-        return;
-      }
+  function findPeaks(projection) {
+    const max = Math.max(...projection);
 
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-      script.onload = resolve;
-      script.onerror = () => reject(new Error("OCR 프로그램을 불러오지 못했습니다."));
-      document.head.appendChild(script);
-    });
-  }
+    if (!max) return [];
 
-  function groupByY(words, tolerance = 20) {
-    const groups = [];
+    const threshold = Math.max(8, max * 0.48);
+    const peaks = [];
 
-    [...words]
-      .sort((a, b) => a.y - b.y)
-      .forEach(word => {
-        let group = groups.find(g => Math.abs(g.y - word.y) < tolerance);
+    let start = -1;
+    let end = -1;
 
-        if (!group) {
-          group = { y: word.y, words: [] };
-          groups.push(group);
+    for (let i = 0; i < projection.length; i++) {
+      if (projection[i] >= threshold) {
+        if (start < 0) start = i;
+        end = i;
+      } else if (start >= 0) {
+        if (end - start <= 8) {
+          let weighted = 0;
+          let total = 0;
+
+          for (let j = start; j <= end; j++) {
+            weighted += j * projection[j];
+            total += projection[j];
+          }
+
+          peaks.push(Math.round(weighted / total));
         }
 
-        group.words.push(word);
-        group.y = group.words.reduce((sum, w) => sum + w.y, 0) /
-          group.words.length;
-      });
+        start = -1;
+        end = -1;
+      }
+    }
 
-    groups.forEach(group => {
-      group.words.sort((a, b) => a.x - b.x);
-      group.text = group.words.map(w => w.text).join("");
-    });
+    if (start >= 0 && end - start <= 8) {
+      let weighted = 0;
+      let total = 0;
 
-    return groups.sort((a, b) => a.y - b.y);
+      for (let j = start; j <= end; j++) {
+        weighted += j * projection[j];
+        total += projection[j];
+      }
+
+      peaks.push(Math.round(weighted / total));
+    }
+
+    return peaks;
   }
 
-  function findDateColumns(words) {
-    const numberWords = words.map(w => {
-      const value = String(w.text || "").replace(/[^\d]/g, "");
+  function detectProjections(canvas) {
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const w = canvas.width;
+    const h = canvas.height;
+    const pixels = ctx.getImageData(0, 0, w, h).data;
 
-      return {
-        day: Number(value),
-        x: w.x,
-        y: w.y
-      };
-    }).filter(w =>
-      Number.isInteger(w.day) &&
-      w.day >= 1 &&
-      w.day <= lastDay
+    const vertical = new Array(w).fill(0);
+    const horizontal = new Array(h).fill(0);
+
+    // 사진의 밝은 배경과 어두운 표 선을 구분
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const gray = (
+          pixels[i] * 0.299 +
+          pixels[i + 1] * 0.587 +
+          pixels[i + 2] * 0.114
+        );
+
+        if (gray < 235) {
+          vertical[x]++;
+          horizontal[y]++;
+        }
+      }
+    }
+
+    return {
+      vertical: findPeaks(vertical),
+      horizontal: findPeaks(horizontal)
+    };
+  }
+
+  function coefficient(values) {
+    if (!values.length) return 999;
+
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    if (!mean) return 999;
+
+    const variance = values.reduce(
+      (sum, v) => sum + (v - mean) ** 2, 0
+    ) / values.length;
+
+    return Math.sqrt(variance) / mean;
+  }
+
+  function chooseVertical(lines, needed) {
+    let best = null;
+    let bestScore = Infinity;
+
+    for (let i = 0; i <= lines.length - needed; i++) {
+      const part = lines.slice(i, i + needed);
+      const gaps = part.slice(1).map((v, j) => v - part[j]);
+
+      const dateGaps = gaps.slice(1);
+      const cv = coefficient(dateGaps);
+      const mean = dateGaps.reduce((a, b) => a + b, 0) / dateGaps.length;
+      const firstRatio = gaps[0] / mean;
+
+      if (firstRatio < 1.2 || firstRatio > 7) continue;
+      if (cv > 0.30) continue;
+
+      const score = cv + Math.abs(firstRatio - 2.5) * 0.025;
+
+      if (score < bestScore) {
+        bestScore = score;
+        best = part;
+      }
+    }
+
+    return best;
+  }
+
+  function chooseHorizontal(lines, needed) {
+    let best = null;
+    let bestScore = Infinity;
+
+    for (let i = 0; i <= lines.length - needed; i++) {
+      const part = lines.slice(i, i + needed);
+      const gaps = part.slice(1).map((v, j) => v - part[j]);
+      const cv = coefficient(gaps);
+
+      if (Math.min(...gaps) < 8 || cv > 0.40) continue;
+
+      if (cv < bestScore) {
+        bestScore = cv;
+        best = part;
+      }
+    }
+
+    return best;
+  }
+
+  function detectGrid(canvas) {
+    const peaks = detectProjections(canvas);
+    const staff = getStaff();
+
+    const vertical = chooseVertical(
+      peaks.vertical,
+      lastDay + 2
     );
 
-    const groups = groupByY(numberWords, 35)
-      .map(group => ({
-        y: group.y,
-        items: group.words
-      }))
-      .sort((a, b) => {
-        const countA = new Set(a.items.map(w => w.day)).size;
-        const countB = new Set(b.items.map(w => w.day)).size;
-        return countB - countA;
-      });
+    const horizontal = chooseHorizontal(
+      peaks.horizontal,
+      9
+    );
 
-    const header = groups[0];
-
-    if (!header || new Set(header.items.map(w => w.day)).size < 3) {
+    if (!vertical || !horizontal) {
       return null;
     }
 
-    const unique = [];
-
-    header.items.forEach(w => {
-      if (!unique.some(v => v.day === w.day)) unique.push(w);
-    });
-
-    if (unique.length < 3) return null;
-
-    // 날짜와 가로 위치의 관계를 직선으로 계산
-    const meanDay = unique.reduce((s, w) => s + w.day, 0) / unique.length;
-    const meanX = unique.reduce((s, w) => s + w.x, 0) / unique.length;
-
-    let numerator = 0;
-    let denominator = 0;
-
-    unique.forEach(w => {
-      numerator += (w.day - meanDay) * (w.x - meanX);
-      denominator += (w.day - meanDay) ** 2;
-    });
-
-    const pitch = numerator / denominator;
-    const startX = meanX - pitch * meanDay;
-
-    if (!Number.isFinite(pitch) || pitch < 3) return null;
-
-    return Array.from({ length: lastDay }, (_, i) => ({
-      day: i + 1,
-      x: startX + pitch * (i + 1)
-    }));
+    return {
+      vertical,
+      horizontal,
+      staffCount: staff.length
+    };
   }
 
- function findStaffRows(words) {
-  const firstDateX = dateColumns[0]?.x;
-  const pitch = dateColumns[1]?.x - firstDateX;
+  function getCode(raw) {
+    const value = String(raw || "").trim();
+    const upper = value.toUpperCase().replace(/[^A-Z]/g, "");
 
-  if (!Number.isFinite(firstDateX) || !Number.isFinite(pitch)) {
-    return [];
+    if (value.includes("예비군")) return "off";
+    if (value.includes("외")) return "외";
+
+    if (upper.includes("BC")) return "BC";
+    if (upper.includes("HV")) return "HV";
+    if (upper.includes("HD")) return "HD";
+    if (upper.includes("OFF")) return "off";
+
+    if (upper.includes("D")) return "D";
+    if (upper.includes("C")) return "C";
+    if (upper.includes("V")) return "V";
+
+    return "off";
   }
 
-  const leftWords = words.filter(w =>
-    w.x < firstDateX - pitch * 0.35 &&
-    w.y > 40
-  );
+  async function loadWorker() {
+    if (worker) return;
 
-  const lines = groupByY(leftWords, 24)
-    .filter(line => line.words.length > 0)
-    .sort((a, b) => a.y - b.y);
+    if (!window.Tesseract) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src =
+          "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        script.onload = resolve;
+        script.onerror = () => reject(
+          new Error("OCR 프로그램을 불러오지 못했습니다.")
+        );
+        document.head.appendChild(script);
+      });
+    }
 
-  return lines.map((line, index) => ({
-    id: index,
-    y: line.y,
-    text: staff[index] || "",
-    name: staff[index] || "",
-    words: line.words
-  })).filter(row => row.name);
-}
+    worker = await Tesseract.createWorker("kor+eng");
 
-  function renderMappings() {
-    const card = document.getElementById("photoMappingCard");
-    const el = document.getElementById("photoMappings");
+    await worker.setParameters({
+      tessedit_pageseg_mode: "8",
+      tessedit_char_whitelist:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz예비군외"
+    });
+  }
 
-    card.style.display = "block";
+  async function readCell(ctx, x0, y0, x1, y1) {
+    const marginX = (x1 - x0) * 0.12;
+    const marginY = (y1 - y0) * 0.12;
 
-    if (!detectedRows.length) {
-      el.innerHTML = `
-        <p style="color:#d9534f;">
-          직원 이름 영역을 읽지 못했습니다.
-          이 사진으로는 직원별 근무표를 안전하게 만들 수 없습니다.
-        </p>`;
-      document.getElementById("photoPreviewCard").style.display = "none";
+    const left = x0 + marginX;
+    const top = y0 + marginY;
+    const width = x1 - x0 - marginX * 2;
+    const height = y1 - y0 - marginY * 2;
+
+    if (width < 2 || height < 2) return "off";
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(width * 4);
+    canvas.height = Math.round(height * 4);
+
+    const c = canvas.getContext("2d", { willReadFrequently: true });
+
+    c.drawImage(
+      document.getElementById("photoImage"),
+      left, top, width, height,
+      0, 0, canvas.width, canvas.height
+    );
+
+    const image = c.getImageData(0, 0, canvas.width, canvas.height);
+    const p = image.data;
+
+    for (let i = 0; i < p.length; i += 4) {
+      const gray = (
+        p[i] * 0.299 +
+        p[i + 1] * 0.587 +
+        p[i + 2] * 0.114
+      );
+
+      const v = gray < 185 ? 0 : 255;
+      p[i] = p[i + 1] = p[i + 2] = v;
+    }
+
+    c.putImageData(image, 0, 0);
+
+    const result = await worker.recognize(canvas);
+    return getCode(result.data.text);
+  }
+
+  async function readPhoto() {
+    const button = document.getElementById("photoRead");
+    const monthInput = document.getElementById("photoMonth");
+
+    if (!imageFile) {
+      alert("먼저 근무표 사진을 선택해 주세요.");
       return;
     }
 
-    el.innerHTML = detectedRows.map(row => `
-      <div style="display:flex;align-items:center;gap:8px;
-        padding:7px 0;border-bottom:1px solid #ddd;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:700;">
-            ${escapeHTML(row.text || "(이름 인식 안 됨)")}
-          </div>
-          <div style="font-size:10px;color:#888;">
-            사진의 ${row.id + 1}번째 인식 행
-          </div>
-        </div>
-        <select data-row="${row.id}"
-          style="width:115px;max-width:42%;">
-          <option value="">선택 안 함</option>
-          ${staff.map(name => `
-            <option value="${escapeHTML(name)}"
-              ${row.name === name ? "selected" : ""}>
-              ${escapeHTML(name)}
-            </option>
-          `).join("")}
-        </select>
-      </div>
-    `).join("");
+    month = monthInput.value;
 
-    el.querySelectorAll("select[data-row]").forEach(select => {
-      select.addEventListener("change", () => {
-        const row = detectedRows[Number(select.dataset.row)];
-        row.name = select.value;
-        buildPreview();
-      });
-    });
-
-    buildPreview();
-  }
-function getCode(value) {
-  const raw = String(value || "").trim();
-  const upper = raw.toUpperCase().replace(/[^A-Z가-힣]/g, "");
-
-  if (raw.includes("예비군")) return "off";
-  if (raw.includes("외")) return "외";
-
-  if (upper.includes("BC")) return "BC";
-  if (upper.includes("HV")) return "HV";
-  if (upper.includes("HD")) return "HD";
-  if (upper.includes("OFF")) return "off";
-
-  if (upper === "D") return "D";
-  if (upper === "C") return "C";
-  if (upper === "V") return "V";
-
-  return "off";
-}
-
-  let cellOcrWorker = null;
-async function buildPreview() {
-  const mapped = detectedRows.filter(row =>
-    row.name && staff.includes(row.name)
-  );
-
-  if (!mapped.length) {
-    document.getElementById("photoPreviewCard").style.display = "none";
-    return;
-  }
-
-  setStatus("직원별 근무칸을 하나씩 읽고 있습니다. 잠시 기다려 주세요.");
-
-  const img = document.getElementById("photoImage");
-
-  if (!cellOcrWorker) {
-    cellOcrWorker = await Tesseract.createWorker("kor+eng");
-    await cellOcrWorker.setParameters({
-      tessedit_pageseg_mode: "8"
-    });
-  }
-
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  await img.decode();
-
-  const width = img.naturalWidth;
-  const height = img.naturalHeight;
-
-  const pitch = dateColumns[1].x - dateColumns[0].x;
-
-  const sortedY = mapped.map(r => r.y).sort((a, b) => a - b);
-  const gaps = sortedY.slice(1).map((y, i) => y - sortedY[i]);
-
-  const rowGap = gaps.length
-    ? gaps.reduce((a, b) => a + b, 0) / gaps.length
-    : 30;
-
-  previewRows = [];
-
-  for (const row of mapped) {
-    const dayCodes = {};
-
-    for (let day = 1; day <= lastDay; day++) {
-      const centerX = dateColumns[day - 1].x;
-
-      const x0 = Math.max(0, centerX - pitch * 0.43);
-      const x1 = Math.min(width, centerX + pitch * 0.43);
-      const y0 = Math.max(0, row.y - rowGap * 0.42);
-      const y1 = Math.min(height, row.y + rowGap * 0.42);
-
-      const cropW = Math.max(1, x1 - x0);
-      const cropH = Math.max(1, y1 - y0);
-
-      canvas.width = Math.round(cropW * 3);
-      canvas.height = Math.round(cropH * 3);
-
-      ctx.drawImage(
-        img,
-        x0, y0, cropW, cropH,
-        0, 0, canvas.width, canvas.height
-      );
-
-      // 글자를 선명하게 하기 위한 흑백 처리
-      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const p = pixels.data;
-
-      for (let i = 0; i < p.length; i += 4) {
-        const gray = (p[i] + p[i + 1] + p[i + 2]) / 3;
-        const value = gray < 170 ? 0 : 255;
-        p[i] = p[i + 1] = p[i + 2] = value;
-      }
-
-      ctx.putImageData(pixels, 0, 0);
-
-      try {
-        const result = await cellOcrWorker.recognize(canvas);
-        const raw = String(result.data.text || "").trim();
-        dayCodes[day] = getCode(raw);
-      } catch (error) {
-        dayCodes[day] = "off";
-      }
+    if (!month) {
+      alert("근무표 월을 선택해 주세요.");
+      return;
     }
 
-    previewRows.push({
-      name: row.name,
-      days: dayCodes
-    });
+    const staff = getStaff();
+
+    if (staff.length !== 6) {
+      alert("등록된 직원이 6명인지 확인해 주세요.");
+      return;
+    }
+
+    lastDay = new Date(
+      Number(month.slice(0, 4)),
+      Number(month.slice(5, 7)),
+      0
+    ).getDate();
+
+    button.disabled = true;
+    document.getElementById("photoPreviewCard").style.display = "none";
+
+    try {
+      status("사진의 표 구분선을 찾고 있습니다.");
+
+      const img = document.getElementById("photoImage");
+      await img.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      canvas.getContext("2d").drawImage(img, 0, 0);
+
+      grid = detectGrid(canvas);
+
+      if (!grid) {
+        status(
+          "표의 격자선을 정확하게 찾지 못했습니다.\n" +
+          "잘못된 근무표를 만드는 것을 막기 위해 중단했습니다.\n" +
+          "저장된 근무 데이터는 변경되지 않았습니다."
+        );
+        return;
+      }
+
+      status(
+        "표의 칸을 찾았습니다.\n" +
+        "직원 6명, 날짜 " + lastDay + "일을 읽고 있습니다."
+      );
+
+      await loadWorker();
+
+      const staff = getStaff();
+      const v = grid.vertical;
+      const h = grid.horizontal;
+
+      previewRows = [];
+
+      for (let r = 0; r < 6; r++) {
+        const days = {};
+
+        // A3~A8 직원 행의 오른쪽 B열부터 읽기
+        const rowTop = h[r + 2];
+        const rowBottom = h[r + 3];
+
+        for (let day = 1; day <= lastDay; day++) {
+          const col = day;
+
+          status(
+            `${staff[r]} 근무 인식 중...\n` +
+            `${day}/${lastDay}일`
+          );
+
+          days[day] = await readCell(
+            canvas.getContext("2d"),
+            v[col],
+            rowTop,
+            v[col + 1],
+            rowBottom
+          );
+        }
+
+        previewRows.push({
+          name: staff[r],
+          days
+        });
+      }
+
+      renderPreview();
+
+      status(
+        "인식이 끝났습니다.\n" +
+        "직원 6명 × " + lastDay + "일을 미리보기로 만들었습니다.\n" +
+        "근무코드를 확인하고 수정한 뒤 저장해 주세요."
+      );
+
+    } catch (error) {
+      console.error(error);
+      status("사진 인식 오류:\n" + error.message);
+    } finally {
+      button.disabled = false;
+    }
   }
 
-  const seen = new Set();
-
-  previewRows = previewRows.filter(row => {
-    if (seen.has(row.name)) return false;
-    seen.add(row.name);
-    return true;
-  });
-
-  renderPreview();
-
-  setStatus(
-    `직원 ${previewRows.length}명, ${lastDay}일 근무칸을 개별 인식했습니다.\n` +
-    `미리보기에서 근무코드를 확인해 주세요.`
-  );
-}
   function renderPreview() {
     const card = document.getElementById("photoPreviewCard");
     const table = document.getElementById("photoTable");
 
-    card.style.display = "block";
-
     let html = `
-      <thead>
-        <tr>
-          <th style="position:sticky;left:0;background:#eee;padding:5px;">
-            직원
-          </th>
-          ${Array.from({ length: lastDay }, (_, i) => `
-            <th style="padding:4px;background:#eee;">${i + 1}</th>
-          `).join("")}
-        </tr>
-      </thead>
-      <tbody>
+      <thead><tr>
+        <th style="position:sticky;left:0;background:#eee;padding:5px;">
+          직원
+        </th>
+        ${Array.from({ length: lastDay }, (_, i) =>
+          `<th style="padding:4px;background:#eee;">${i + 1}</th>`
+        ).join("")}
+      </tr></thead><tbody>
     `;
 
-    previewRows.forEach((row, rowIndex) => {
+    previewRows.forEach((row, r) => {
       html += `
         <tr>
-          <th style="position:sticky;left:0;background:#fff;
-            padding:4px;white-space:nowrap;border:1px solid #ddd;">
-            ${escapeHTML(row.name)}
+          <th style="position:sticky;left:0;background:white;
+            padding:4px;border:1px solid #ddd;white-space:nowrap;">
+            ${esc(row.name)}
           </th>
       `;
 
       for (let day = 1; day <= lastDay; day++) {
         html += `
           <td style="padding:2px;border:1px solid #ddd;">
-            <select data-person="${rowIndex}" data-day="${day}"
-              style="width:38px;min-width:38px;padding:3px 0;
-                font-size:10px;border:0;background:transparent;">
-              ${codes.map(code => `
+            <select data-row="${r}" data-day="${day}"
+              style="width:40px;min-width:40px;padding:3px 0;
+              font-size:10px;border:0;background:transparent;">
+              ${CODES.map(code => `
                 <option value="${code}"
                   ${row.days[day] === code ? "selected" : ""}>
                   ${code}
@@ -507,109 +544,23 @@ async function buildPreview() {
     html += "</tbody>";
     table.innerHTML = html;
 
-    table.querySelectorAll("select[data-person]").forEach(select => {
+    table.querySelectorAll("select[data-row]").forEach(select => {
       select.addEventListener("change", () => {
-        const row = previewRows[Number(select.dataset.person)];
+        const row = Number(select.dataset.row);
         const day = Number(select.dataset.day);
-        row.days[day] = select.value;
+        previewRows[row].days[day] = select.value;
       });
     });
-  }
 
-  async function readPhoto() {
-    const monthInput = document.getElementById("photoMonth");
-
-    if (!imageFile) {
-      alert("먼저 근무표 사진을 선택해 주세요.");
-      return;
-    }
-
-    month = monthInput.value;
-
-    if (!month) {
-      alert("근무표 월을 선택해 주세요.");
-      return;
-    }
-
-    lastDay = new Date(
-      Number(month.slice(0, 4)),
-      Number(month.slice(5, 7)),
-      0
-    ).getDate();
-
-    document.getElementById("photoRead").disabled = true;
-    document.getElementById("photoMappingCard").style.display = "none";
-    document.getElementById("photoPreviewCard").style.display = "none";
-
-    try {
-      setStatus("사진을 분석하고 있습니다. 잠시 기다려 주세요.");
-
-      await loadTesseract();
-
-      const result = await Tesseract.recognize(
-        imageFile,
-        "kor+eng",
-        {
-          logger: info => {
-            if (info.status === "recognizing text") {
-              setStatus(
-                `사진을 읽고 있습니다. ${Math.round((info.progress || 0) * 100)}%`
-              );
-            }
-          }
-        }
-      );
-
-      const ocr = result.data || {};
-      document.getElementById("photoText").value = ocr.text || "";
-
-      detectedWords = (ocr.words || []).map(word => ({
-        text: word.text || "",
-        x: (word.bbox.x0 + word.bbox.x1) / 2,
-        y: (word.bbox.y0 + word.bbox.y1) / 2,
-        confidence: word.confidence || 0
-      })).filter(word => word.text.trim());
-
-      if (!detectedWords.length) {
-        setStatus("글자를 인식하지 못했습니다. 사진을 확인해 주세요.");
-        return;
-      }
-
-      dateColumns = findDateColumns(detectedWords);
-
-      if (!dateColumns) {
-        setStatus(
-          "날짜 열의 위치를 계산하지 못했습니다.\n" +
-          "날짜를 충분히 읽지 못해 잘못된 근무표가 만들어지는 것을 막았습니다."
-        );
-        return;
-      }
-
-      detectedRows = findStaffRows(detectedWords);
-
-      renderMappings();
-
-      if (!detectedRows.length) {
-        setStatus(
-          "날짜 열은 찾았지만 직원 이름 행을 찾지 못했습니다.\n" +
-          "직원별 근무표를 안전하게 만들 수 없어 저장을 막았습니다."
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      setStatus("사진 읽기 중 오류가 발생했습니다.\n" + error.message);
-    } finally {
-      document.getElementById("photoRead").disabled = false;
-    }
+    card.style.display = "block";
   }
 
   function savePhoto() {
-    if (!previewRows.length) {
-      alert("저장할 직원이 없습니다. 직원 행을 먼저 연결해 주세요.");
+    if (previewRows.length !== 6) {
+      alert("직원 6명의 미리보기를 먼저 만들어 주세요.");
       return;
     }
 
-    const total = previewRows.length * lastDay;
     let existing = 0;
 
     previewRows.forEach(row => {
@@ -621,11 +572,12 @@ async function buildPreview() {
       }
     });
 
+    const total = previewRows.length * lastDay;
+
     const message =
       `${month} 근무표를 저장할까요?\n\n` +
-      `직원: ${previewRows.length}명\n` +
-      `날짜: 1일~${lastDay}일\n` +
-      `저장할 근무칸: ${total}개\n` +
+      `직원: 6명\n날짜: 1일~${lastDay}일\n` +
+      `저장 칸: ${total}개\n` +
       `기존 근무 기록 덮어쓰기: ${existing}개\n\n` +
       `미리보기에서 확인한 내용으로 저장합니다.`;
 
@@ -634,7 +586,7 @@ async function buildPreview() {
     previewRows.forEach(row => {
       for (let day = 1; day <= lastDay; day++) {
         const date = `${month}-${pad(day)}`;
-        const code = codes.includes(row.days[day])
+        const code = CODES.includes(row.days[day])
           ? row.days[day]
           : "off";
 
@@ -643,7 +595,6 @@ async function buildPreview() {
     });
 
     save();
-
     alert("근무표 저장이 완료되었습니다.");
   }
 
