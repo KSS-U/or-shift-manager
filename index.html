@@ -792,6 +792,7 @@ document.getElementById("saveShift").onclick=()=>{
   save();
 };
 
+
 function renderCodeChoices(){
   const el=document.getElementById("codeChoices");
 
@@ -804,10 +805,42 @@ function renderCodeChoices(){
   el.querySelectorAll("[data-code]").forEach(b=>{
     b.onclick=()=>{
       chosenCode=b.dataset.code;
-      renderCodeChoices();
+
+      if(excelEntryMode){
+        const date=document.getElementById("shiftDate").value;
+        const name=[...selectedPeople][0];
+        const index=data.staff.indexOf(name);
+
+        if(!date || !name) return;
+
+        if(editingKey){
+          delete data.shifts[editingKey];
+        }
+
+        data.shifts[key(date,name)]=chosenCode;
+        selectedDate=date;
+        current=parseDate(date);
+
+        save();
+
+        const nextName=data.staff[index+1];
+
+        if(nextName){
+          openShift(date,nextName);
+          excelEntryMode=true;
+        }else{
+          excelEntryMode=false;
+          document.getElementById("modal").classList.remove("show");
+          selectedPeople.clear();
+          editingKey=null;
+        }
+      }else{
+        renderCodeChoices();
+      }
     };
   });
 }
+
 
 function renderExistingDayShifts(date){
   const el=document.getElementById("existingDayShifts");
