@@ -364,13 +364,18 @@ if (!worker) {
       $("photoStatus").textContent = "인식에 실패했습니다.";
     } finally 
       {
+
   $("readPhotoBtn").disabled = false;
-  $("readPhotoBtn").style.background = "#1976d2";
+  $("readPhotoBtn").style.background =
+    "linear-gradient(180deg,#aa9bc9 0%,#8975ad 48%,#69558f 100%)";
   $("readPhotoBtn").style.color = "#ffffff";
   $("readPhotoBtn").style.fontWeight = "800";
+  $("readPhotoBtn").style.border = "1px solid #756397";
+  $("readPhotoBtn").style.borderRadius = "10px";
+  $("readPhotoBtn").style.boxShadow =
+    "0 4px 0 #51416f, 0 6px 12px rgba(65,48,95,0.22)";
   $("readPhotoBtn").style.opacity = "1";
-}
-  });
+
 
   
 function renderResults(year, mon, days) {
