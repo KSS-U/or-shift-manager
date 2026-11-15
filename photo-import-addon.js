@@ -183,77 +183,38 @@ function getCode(raw) {
   return "확인";
 }
 
-
 async function readOneCell(x, y, width, height) {
-  async function makeVersion(mode) {
-    const c = document.createElement("canvas");
-    c.width = 960;
-    c.height = 480;
+  const c = document.createElement("canvas");
+  c.width = 480;
+  c.height = 240;
 
-    const ctx = c.getContext("2d", { willReadFrequently: true });
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, c.width, c.height);
+  const ctx = c.getContext("2d", { willReadFrequently: true });
 
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      photo,
-      x, y, width, height,
-      30, 30, 900, 420
-    );
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, c.width, c.height);
 
-    const image = ctx.getImageData(0, 0, c.width, c.height);
-    const pixels = image.data;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
-    for (let i = 0; i < pixels.length; i += 4) {
-      const gray =
-        pixels[i] * 0.299 +
-        pixels[i + 1] * 0.587 +
-        pixels[i + 2] * 0.114;
+  ctx.drawImage(
+    photo,
+    x, y, width, height,
+    15, 15, 450, 210
+  );
 
-      let value;
+  const result = await worker.recognize(c);
 
-      if (mode === 1) {
-        value = Math.max(0, Math.min(255, (gray - 135) * 2 + 128));
-      } else {
-        value = gray < 165 ? 0 : 255;
-      }
-
-      pixels[i] = value;
-      pixels[i + 1] = value;
-      pixels[i + 2] = value;
-    }
-
-    ctx.putImageData(image, 0, 0);
-    return c;
-  }
-
-  const firstImage = await makeVersion(1);
-  const secondImage = await makeVersion(2);
-
-  const first = await worker.recognize(firstImage);
-  const second = await worker.recognize(secondImage);
-
-  const raw1 = first.data.text || "";
-  const raw2 = second.data.text || "";
-
-  const code1 = getCode(raw1);
-  const code2 = getCode(raw2);
-
-  const confidence1 = Number(first.data.confidence || 0);
-  const confidence2 = Number(second.data.confidence || 0);
-
-  const matched =
-    code1 !== "확인" &&
-    code1 === code2 &&
-    confidence1 >= 55 &&
-    confidence2 >= 55;
+  const raw = result.data.text || "";
+  const confidence = Number(result.data.confidence || 0);
+  const code = getCode(raw);
 
   return {
-    code: matched ? code1 : "확인",
-    raw: `1차:${raw1} / 2차:${raw2}`,
-    confidence: Math.min(confidence1, confidence2)
+    code: code,
+    raw: raw,
+    confidence: confidence
   };
 }
+
 
   $("readPhotoBtn").addEventListener("click", async () => {
     const month = $("photoMonth").value;
