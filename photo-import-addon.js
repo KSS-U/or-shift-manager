@@ -45,8 +45,7 @@ view.innerHTML = `
       아래 숫자를 조정해 날짜 칸과 직원별 근무 영역을 맞춰 주세요.
       미리보기의 선을 기준으로 조정하면 됩니다.
     </p>
-`;
-
+    
       <div id="photoPreviewWrap">
         <canvas id="photoCanvas" style="width:100%;height:auto;border:1px solid #ddd"></canvas>
       </div>
