@@ -323,9 +323,14 @@ if (!worker) {
       console.error(err);
       alert("사진 인식 중 오류가 발생했습니다: " + (err.message || err));
       $("photoStatus").textContent = "인식에 실패했습니다.";
-    } finally {
-      $("readPhotoBtn").disabled = false;
-    }
+    } finally 
+      {
+  $("readPhotoBtn").disabled = false;
+  $("readPhotoBtn").style.background = "#1976d2";
+  $("readPhotoBtn").style.color = "#ffffff";
+  $("readPhotoBtn").style.fontWeight = "800";
+  $("readPhotoBtn").style.opacity = "1";
+}
   });
 
   
