@@ -662,13 +662,15 @@ let list=entries(date)
 
   document.getElementById("calendar").innerHTML=html;
 
-  document.querySelectorAll(".day[data-date]").forEach(b=>{
-    b.onclick=()=>{
-      selectedDate=b.dataset.date;
-      renderCalendar();
-      renderDay();
-    };
-  });
+document.querySelectorAll(".day[data-date]").forEach(b=>{
+  b.onclick=()=>{
+    selectedDate=b.dataset.date;
+    current=parseDate(selectedDate);
+    renderCalendar();
+    renderDay();
+    openShift(selectedDate,null);
+  };
+});
 }
 function renderDay(){let date=parseDate(selectedDate);document.getElementById("dayTitle").textContent=`${date.getMonth()+1}월 ${date.getDate()}일 근무 현황`;let list=entries(selectedDate).filter(x=>shown(x.code));let el=document.getElementById("dayShifts");el.className=list.length?"":"empty";el.innerHTML=list.length?list.map(x=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(x.name)}</b><span class="chip ${x.code}">${x.code}</span><button class="secondary small" data-edit="${esc(x.name)}">수정</button></div>`).join(""):"등록된 근무가 없거나 필터 조건에 맞는 근무가 없습니다.";el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShift(selectedDate,b.dataset.edit))}
 
@@ -746,58 +748,6 @@ function renderStaffChoices(){
   el.querySelectorAll("[data-person]").forEach(b=>{
     b.onclick=()=>{
       const name=b.dataset.person;
-
-      if(selectedPeople.has(name)){
-        selectedPeople.delete(name);
-      }else{
-        selectedPeople.add(name);
-      }
-
-      renderStaffChoices();
-    };
-  });
-
-  document.getElementById("selectAllPeople").onclick=()=>{
-    selectedPeople=new Set(data.staff);
-    renderStaffChoices();
-  };
-
-  document.getElementById("clearAllPeople").onclick=()=>{
-    selectedPeople.clear();
-    renderStaffChoices();
-  };
-}
-
-function openShift(date,name){
-  editingKey = name && data.shifts[key(date,name)]
-    ? key(date,name) : null;
-
-  document.getElementById("shiftDate").value=date;
-
- selectedPeople = new Set(name ? [name] : []);
-
-  chosenCode = editingKey ? data.shifts[editingKey] : "D";
-
-  document.getElementById("deleteShift").style.display =
-    editingKey ? "block" : "none";
-
-  document.getElementById("modalTitle").textContent =
-    editingKey ? "근무 수정" : "근무 입력";
-
-  renderStaffChoices();
-  renderCodeChoices();
-
-  document.getElementById("modal").classList.add("show");
-}
-function renderCodeChoices(){document.getElementById("codeChoices").innerHTML=CODES.map(c=>`<button class="filter ${chosenCode===c?"on":""}" data-choice="${c}">${c}</button>`).join("");document.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{chosenCode=b.dataset.choice;renderCodeChoices()})}
-document.getElementById("addShift").onclick=()=>openShift(selectedDate,null);
-document.getElementById("closeModal").onclick=()=>document.getElementById("modal").classList.remove("show");
-document.getElementById("saveShift").onclick=()=>{
-  let date=document.getElementById("shiftDate").value;
-
-  if(!date || selectedPeople.size===0){
-    return alert("날짜와 직원을 선택해 주세요.");
-  }
 
   if(editingKey){
     delete data.shifts[editingKey];
