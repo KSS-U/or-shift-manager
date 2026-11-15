@@ -165,86 +165,95 @@
 
   $("photoMonth").addEventListener("change", drawPreview);
 
-  
 function getCode(raw) {
   const t = String(raw || "")
     .toUpperCase()
     .replace(/\s/g, "")
     .replace(/[^A-Z가-힣]/g, "");
 
-  const candidates = [
-    ["BC", ["BC", "8C", "BС"]],
-    ["HV", ["HV", "HⅤ"]],
-    ["HD", ["HD", "H0"]],
-    ["off", ["OFF", "0FF", "OF"]],
-    ["외", ["외", "외근"]],
-    ["D", ["D", "0", "O"]],
-    ["C", ["C", "G"]],
-    ["V", ["V", "Y"]]
-  ];
-
-  for (const [code, variants] of candidates) {
-    if (variants.some(v => t === v || t.includes(v))) {
-      return code;
-    }
-  }
+  if (t === "BC") return "BC";
+  if (t === "HV") return "HV";
+  if (t === "HD") return "HD";
+  if (t === "OFF") return "off";
+  if (t === "외" || t === "외근") return "외";
+  if (t === "D") return "D";
+  if (t === "C") return "C";
+  if (t === "V") return "V";
 
   return "확인";
 }
 
+
 async function readOneCell(x, y, width, height) {
-  const scale = 4;
-  const c = document.createElement("canvas");
+  async function makeVersion(mode) {
+    const c = document.createElement("canvas");
+    c.width = 960;
+    c.height = 480;
 
-  c.width = 240 * scale;
-  c.height = 120 * scale;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
 
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, c.width, c.height);
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-
-  ctx.drawImage(
-    photo,
-    x, y, width, height,
-    12, 12, c.width - 24, c.height - 24
-  );
-
-  const image = ctx.getImageData(0, 0, c.width, c.height);
-  const pixels = image.data;
-
-  for (let i = 0; i < pixels.length; i += 4) {
-    const gray =
-      pixels[i] * 0.299 +
-      pixels[i + 1] * 0.587 +
-      pixels[i + 2] * 0.114;
-
-    const contrast = Math.max(
-      0,
-      Math.min(255, (gray - 145) * 2.2 + 128)
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      photo,
+      x, y, width, height,
+      30, 30, 900, 420
     );
 
-    pixels[i] = contrast;
-    pixels[i + 1] = contrast;
-    pixels[i + 2] = contrast;
+    const image = ctx.getImageData(0, 0, c.width, c.height);
+    const pixels = image.data;
+
+    for (let i = 0; i < pixels.length; i += 4) {
+      const gray =
+        pixels[i] * 0.299 +
+        pixels[i + 1] * 0.587 +
+        pixels[i + 2] * 0.114;
+
+      let value;
+
+      if (mode === 1) {
+        value = Math.max(0, Math.min(255, (gray - 135) * 2 + 128));
+      } else {
+        value = gray < 165 ? 0 : 255;
+      }
+
+      pixels[i] = value;
+      pixels[i + 1] = value;
+      pixels[i + 2] = value;
+    }
+
+    ctx.putImageData(image, 0, 0);
+    return c;
   }
 
-  ctx.putImageData(image, 0, 0);
+  const firstImage = await makeVersion(1);
+  const secondImage = await makeVersion(2);
 
-  const result = await worker.recognize(c);
-  const raw = result.data.text || "";
-  const code = getCode(raw);
+  const first = await worker.recognize(firstImage);
+  const second = await worker.recognize(secondImage);
+
+  const raw1 = first.data.text || "";
+  const raw2 = second.data.text || "";
+
+  const code1 = getCode(raw1);
+  const code2 = getCode(raw2);
+
+  const confidence1 = Number(first.data.confidence || 0);
+  const confidence2 = Number(second.data.confidence || 0);
+
+  const matched =
+    code1 !== "확인" &&
+    code1 === code2 &&
+    confidence1 >= 55 &&
+    confidence2 >= 55;
 
   return {
-    code,
-    raw,
-    confidence: Number(result.data.confidence || 0)
+    code: matched ? code1 : "확인",
+    raw: `1차:${raw1} / 2차:${raw2}`,
+    confidence: Math.min(confidence1, confidence2)
   };
 }
-
 
   $("readPhotoBtn").addEventListener("click", async () => {
     const month = $("photoMonth").value;
@@ -289,9 +298,18 @@ async function readOneCell(x, y, width, height) {
         });
       }
 
-      if (!worker) {
-        worker = await Tesseract.createWorker("kor+eng");
-      }
+    
+if (!worker) {
+  worker = await Tesseract.createWorker("kor+eng");
+
+  await worker.setParameters({
+    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
+    tessedit_char_whitelist:
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz외근",
+    preserve_interword_spaces: "1"
+  });
+}
+
 
       results = [];
       for (let r = 0; r < 6; r++) {
