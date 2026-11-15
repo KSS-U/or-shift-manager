@@ -59,12 +59,21 @@
   `;
   app.appendChild(view);
 
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".view").forEach(v => v.style.display = "none");
-    view.style.display = "block";
-    document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
-    tab.classList.add("active");
-  });
+
+tab.addEventListener("click", () => {
+  document.querySelectorAll(".view").forEach(v => v.style.display = "none");
+  view.style.display = "block";
+
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  tab.classList.add("active");
+
+  setTimeout(() => {
+    $("photoFile").scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }, 150);
+});
 
   const $ = id => document.getElementById(id);
   let photo = null;
