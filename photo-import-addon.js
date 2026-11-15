@@ -355,14 +355,38 @@ if (!worker) {
       }
 
 
+     
       renderResults(year, mon, days);
+
       $("photoStatus").textContent = "인식이 끝났습니다. 결과를 확인해 주세요.";
       $("photoResult").style.display = "block";
+
+      // 읽기 버튼 기본 디자인으로 복귀
+      $("readPhotoBtn").style.background = "";
+      $("readPhotoBtn").style.color = "";
+      $("readPhotoBtn").style.fontWeight = "";
+      $("readPhotoBtn").style.border = "";
+      $("readPhotoBtn").style.boxShadow = "";
+      $("readPhotoBtn").style.borderRadius = "";
+      $("readPhotoBtn").disabled = false;
+
+      // 저장 버튼 입체 남보라 디자인으로 활성화
+      $("savePhotoBtn").disabled = false;
+      $("savePhotoBtn").style.background =
+        "linear-gradient(180deg,#aa9bc9 0%,#8975ad 48%,#69558f 100%)";
+      $("savePhotoBtn").style.color = "#ffffff";
+      $("savePhotoBtn").style.fontWeight = "800";
+      $("savePhotoBtn").style.border = "1px solid #756397";
+      $("savePhotoBtn").style.borderRadius = "10px";
+      $("savePhotoBtn").style.boxShadow =
+        "0 4px 0 #51416f, 0 6px 12px rgba(65,48,95,0.22)";
+      $("savePhotoBtn").style.opacity = "1";
     } catch (err) {
       console.error(err);
       alert("사진 인식 중 오류가 발생했습니다: " + (err.message || err));
       $("photoStatus").textContent = "인식에 실패했습니다.";
-    } finally 
+    } finally
+ 
       {
 
   $("readPhotoBtn").disabled = false;
