@@ -262,7 +262,6 @@
     return [];
   }
 
-  // 날짜 영역 왼쪽의 글자 위치만 이용해 직원 행 찾기
   const leftWords = words.filter(w =>
     w.x < firstDateX - pitch * 0.35 &&
     w.y > 40
@@ -275,36 +274,11 @@
   return lines.map((line, index) => ({
     id: index,
     y: line.y,
-    text: line.text,
-    name: index < staff.length ? staff[index] : "",
+    text: staff[index] || "",
+    name: staff[index] || "",
     words: line.words
-  }));
+  })).filter(row => row.name);
 }
-
-    // 날짜 첫 열보다 왼쪽에 있는 글자를 직원 이름 영역으로 간주
-    const leftWords = words.filter(w =>
-      w.x < firstDateX - pitch * 0.35 &&
-      w.y > 40
-    );
-
-    const lines = groupByY(leftWords, 24);
-
-    return lines
-      .filter(line => line.words.length > 0)
-      .map((line, index) => {
-        const text = line.text;
-        const exact = staff.find(name => clean(text).includes(clean(name)));
-
-        return {
-          id: index,
-          y: line.y,
-          text,
-          name: exact || "",
-          words: line.words
-        };
-      })
-      .filter(row => row.y > 50);
-  }
 
   function renderMappings() {
     const card = document.getElementById("photoMappingCard");
