@@ -522,8 +522,17 @@ function renderResults(year, mon, days) {
     });
 
     save();
-    alert("근무표 저장이 완료되었습니다.");
-    $("photoResult").style.display = "none";
+alert("근무표 저장이 완료되었습니다.");
+$("photoResult").style.display = "none";
+
+// 저장 버튼 비활성화 및 기본 디자인 복귀
+$("savePhotoBtn").disabled = true;
+$("savePhotoBtn").style.background = "";
+$("savePhotoBtn").style.color = "";
+$("savePhotoBtn").style.fontWeight = "";
+$("savePhotoBtn").style.border = "";
+$("savePhotoBtn").style.boxShadow = "";
+$("savePhotoBtn").style.borderRadius = "";
   });
 
 })();
