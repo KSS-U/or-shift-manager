@@ -665,8 +665,8 @@ let list=entries(date)
 document.querySelectorAll(".day[data-date]").forEach(b=>{
   b.onclick=()=>{
     selectedDate=b.dataset.date;
-    renderCalendar();
-    renderDay();
+    current=parseDate(selectedDate);
+    openShift(selectedDate,null);
   };
 });
 }
