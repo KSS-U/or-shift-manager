@@ -298,7 +298,10 @@ async function readOneCell(x, y, width, height) {
         const staffName = data.staff[r];
         const rowTop = y1 + (y2 - y1) * r / 6;
         const rowBottom = y1 + (y2 - y1) * (r + 1) / 6;
+        
         const row = [];
+        const uncertain = [];
+        const rawTexts = [];
 
         for (let d = 1; d <= days; d++) {
           const colLeft = x1 + (x2 - x1) * (d - 1) / days;
@@ -310,16 +313,28 @@ async function readOneCell(x, y, width, height) {
           $("photoStatus").textContent =
             `${staffName} · ${d}/${days}일 인식 중...`;
 
-          const code = await readOneCell(
+          const result = await readOneCell(
             colLeft + marginX,
             rowTop + marginY,
             colRight - colLeft - marginX * 2,
             rowBottom - rowTop - marginY * 2
           );
-          row.push(code);
+
+          row.push(result.code);
+          rawTexts.push(result.raw);
+
+          if (result.code === "확인" || result.confidence < 65) {
+            uncertain.push(d - 1);
+          }
         }
-        results.push({ name: staffName, codes: row });
-      }
+
+        results.push({
+          name: staffName,
+          codes: row,
+          uncertain,
+          rawTexts
+        });
+
 
       renderResults(year, mon, days);
       $("photoStatus").textContent = "인식이 끝났습니다. 결과를 확인해 주세요.";
@@ -333,41 +348,84 @@ async function readOneCell(x, y, width, height) {
     }
   });
 
-  function renderResults(year, mon, days) {
-    let html = `<table style="border-collapse:collapse;white-space:nowrap;font-size:12px">
-      <tr><th style="padding:6px;border:1px solid #ccc">직원</th>`;
-    for (let d = 1; d <= days; d++) {
-      html += `<th style="padding:5px;border:1px solid #ccc">${d}</th>`;
-    }
-    html += "</tr>";
+  
+function renderResults(year, mon, days) {
+  let html = `<table style="border-collapse:collapse;white-space:nowrap;font-size:12px">
+    <tr><th style="padding:6px;border:1px solid #ccc">직원</th>`;
 
-    results.forEach((row, r) => {
-      html += `<tr><th style="padding:6px;border:1px solid #ccc">${row.name}</th>`;
-      row.codes.forEach((code, d) => {
-        html += `<td style="padding:5px;border:1px solid #ccc">
-          <select data-row="${r}" data-day="${d}" style="font-size:12px">
-            ${["D","C","BC","외","off","V","HV","HD"].map(c =>
-              `<option value="${c}" ${c === code ? "selected" : ""}>${c}</option>`
+  for (let d = 1; d <= days; d++) {
+    html += `<th style="padding:5px;border:1px solid #ccc">${d}</th>`;
+  }
+  html += "</tr>";
+
+  results.forEach((row, r) => {
+    html += `<tr><th style="padding:6px;border:1px solid #ccc">${row.name}</th>`;
+
+    row.codes.forEach((code, d) => {
+      const isUncertain = row.uncertain.includes(d);
+      const raw = row.rawTexts[d] || "";
+      const shownCode = isUncertain ? "확인" : code;
+
+      html += `
+        <td style="
+          padding:5px;
+          border:1px solid #ccc;
+          background:${isUncertain ? "#ffe0e0" : "#fff"};
+        ">
+          <select
+            data-row="${r}"
+            data-day="${d}"
+            style="font-size:12px;${isUncertain ? "border:2px solid #e53935;" : ""}"
+          >
+            ${["D","C","BC","외","off","V","HV","HD","확인"].map(c =>
+              `<option value="${c}" ${c === shownCode ? "selected" : ""}>${c}</option>`
             ).join("")}
           </select>
+          <div style="font-size:9px;color:#777;max-width:55px;overflow:hidden">
+            원문: ${String(raw).replace(/[&<>"']/g, "")}
+          </div>
+          ${isUncertain ? '<div style="font-size:10px;color:#d32f2f;font-weight:bold">확인 필요</div>' : ""}
         </td>`;
-      });
-      html += "</tr>";
     });
 
-    html += "</table>";
-    $("photoTable").innerHTML = html;
+    html += "</tr>";
+  });
 
-    $("photoTable").querySelectorAll("select").forEach(select => {
-      select.addEventListener("change", () => {
-        const r = Number(select.dataset.row);
-        const d = Number(select.dataset.day);
-        results[r].codes[d] = select.value;
-      });
+  html += "</table>";
+  $("photoTable").innerHTML = html;
+
+  $("photoTable").querySelectorAll("select").forEach(select => {
+    select.addEventListener("change", () => {
+      const r = Number(select.dataset.row);
+      const d = Number(select.dataset.day);
+      results[r].codes[d] = select.value;
+
+      if (select.value !== "확인") {
+        results[r].uncertain = results[r].uncertain.filter(i => i !== d);
+        select.parentElement.style.background = "#fff";
+        select.style.border = "";
+        const warning = select.parentElement.querySelector("div:last-child");
+        if (warning && warning.textContent === "확인 필요") {
+          warning.remove();
+        }
+      }
     });
-  }
+  });
+}
+
 
   $("savePhotoBtn").addEventListener("click", () => {
+    
+    const hasUncertain = results.some(row =>
+      row.codes.includes("확인") ||
+      row.uncertain.length > 0
+    );
+
+    if (hasUncertain) {
+      alert("아직 확인하지 않은 근무코드가 있습니다. 빨간색 칸을 모두 확인해 주세요.");
+      return;
+    }
+
     if (!results.length) return;
 
     const month = $("photoMonth").value;
