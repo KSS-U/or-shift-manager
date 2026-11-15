@@ -165,36 +165,86 @@
 
   $("photoMonth").addEventListener("change", drawPreview);
 
-  function getCode(raw) {
-    const t = String(raw || "").toUpperCase().replace(/\s/g, "");
-    if (t.includes("BC")) return "BC";
-    if (t.includes("HV")) return "HV";
-    if (t.includes("HD")) return "HD";
-    if (t.includes("OFF")) return "off";
-    if (t.includes("외")) return "외";
-    if (/\bD\b/.test(t) || t === "D") return "D";
-    if (/\bC\b/.test(t) || t === "C") return "C";
-    if (/\bV\b/.test(t) || t === "V") return "V";
-    return "off";
+  
+function getCode(raw) {
+  const t = String(raw || "")
+    .toUpperCase()
+    .replace(/\s/g, "")
+    .replace(/[^A-Z가-힣]/g, "");
+
+  const candidates = [
+    ["BC", ["BC", "8C", "BС"]],
+    ["HV", ["HV", "HⅤ"]],
+    ["HD", ["HD", "H0"]],
+    ["off", ["OFF", "0FF", "OF"]],
+    ["외", ["외", "외근"]],
+    ["D", ["D", "0", "O"]],
+    ["C", ["C", "G"]],
+    ["V", ["V", "Y"]]
+  ];
+
+  for (const [code, variants] of candidates) {
+    if (variants.some(v => t === v || t.includes(v))) {
+      return code;
+    }
   }
 
-  async function readOneCell(x, y, width, height) {
-    const c = document.createElement("canvas");
-    c.width = 180;
-    c.height = 100;
-    const ctx = c.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, c.width, c.height);
+  return "확인";
+}
 
-    ctx.drawImage(
-      photo,
-      x, y, width, height,
-      8, 8, c.width - 16, c.height - 16
+async function readOneCell(x, y, width, height) {
+  const scale = 4;
+  const c = document.createElement("canvas");
+
+  c.width = 240 * scale;
+  c.height = 120 * scale;
+
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  ctx.drawImage(
+    photo,
+    x, y, width, height,
+    12, 12, c.width - 24, c.height - 24
+  );
+
+  const image = ctx.getImageData(0, 0, c.width, c.height);
+  const pixels = image.data;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const gray =
+      pixels[i] * 0.299 +
+      pixels[i + 1] * 0.587 +
+      pixels[i + 2] * 0.114;
+
+    const contrast = Math.max(
+      0,
+      Math.min(255, (gray - 145) * 2.2 + 128)
     );
 
-    const result = await worker.recognize(c);
-    return getCode(result.data.text);
+    pixels[i] = contrast;
+    pixels[i + 1] = contrast;
+    pixels[i + 2] = contrast;
   }
+
+  ctx.putImageData(image, 0, 0);
+
+  const result = await worker.recognize(c);
+  const raw = result.data.text || "";
+  const code = getCode(raw);
+
+  return {
+    code,
+    raw,
+    confidence: Number(result.data.confidence || 0)
+  };
+}
+
 
   $("readPhotoBtn").addEventListener("click", async () => {
     const month = $("photoMonth").value;
