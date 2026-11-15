@@ -729,8 +729,11 @@ function renderTable(){
   document.getElementById("rosterTable").innerHTML=h;
 
   document.querySelectorAll("#rosterTable [data-cell]").forEach(b=>{
-    b.onclick=()=>openShift(b.dataset.cell,b.dataset.name);
-  });
+  b.onclick=()=>{
+    excelEntryMode=true;
+    openShift(b.dataset.cell,b.dataset.name);
+  };
+});
 }
 
 function renderWeek(){let end=new Date(weekStart);end.setDate(end.getDate()+6);document.getElementById("weekTitle").textContent=`${weekStart.getMonth()+1}/${weekStart.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;let h="";for(let i=0;i<7;i++){let d=new Date(weekStart);d.setDate(d.getDate()+i);let date=iso(d);h+=`<div class="weekday"><div class="date">${["일","월","화","수","목","금","토"][d.getDay()]} ${d.getMonth()+1}/${d.getDate()}</div>`;data.staff.forEach(name=>{let c=data.shifts[key(date,name)];if(c)h+=`<div class="personline"><span>${esc(name)}</span><b class="chip ${c}">${c}</b></div>`});h+="</div>"}document.getElementById("weekGrid").innerHTML=h}
