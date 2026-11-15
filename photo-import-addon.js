@@ -192,10 +192,11 @@ $("photoFile").addEventListener("change", e => {
     $("photoResult").style.display = "none";
 
     $("readPhotoBtn").disabled = false;
-    $("readPhotoBtn").style.background = "#1976d2";
-    $("readPhotoBtn").style.color = "#fff";
-    $("readPhotoBtn").style.fontWeight = "800";
-    $("readPhotoBtn").style.opacity = "1";
+    $("readPhotoBtn").style.background = "#dceeff";
+$("readPhotoBtn").style.color = "#2868a8";
+$("readPhotoBtn").style.fontWeight = "700";
+$("readPhotoBtn").style.opacity = "1";
+$("readPhotoBtn").style.border = "1px solid #b8d8f5";
   };
 
   photo.onerror = () => alert("사진을 불러오지 못했습니다.");
