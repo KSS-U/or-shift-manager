@@ -201,7 +201,7 @@ $("readPhotoBtn").style.borderRadius = "10px";
 $("readPhotoBtn").style.boxShadow =
   "0 4px 0 #51416f, 0 6px 12px rgba(65,48,95,0.22)";
 $("readPhotoBtn").style.opacity = "1";
-
+};
   photo.onerror = () => alert("사진을 불러오지 못했습니다.");
   photo.src = URL.createObjectURL(file);
 });
