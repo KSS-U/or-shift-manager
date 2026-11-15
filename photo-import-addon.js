@@ -337,109 +337,131 @@
 
     buildPreview();
   }
+function getCode(value) {
+  const raw = String(value || "").trim();
+  const upper = raw.toUpperCase().replace(/[^A-Z가-힣]/g, "");
 
-  function getCode(value) {
-    const raw = String(value || "").trim();
-    const upper = raw.toUpperCase();
+  if (raw.includes("예비군")) return "off";
+  if (raw.includes("외")) return "외";
 
-    if (raw.includes("예비군")) return "off";
+  if (upper.includes("BC")) return "BC";
+  if (upper.includes("HV")) return "HV";
+  if (upper.includes("HD")) return "HD";
+  if (upper.includes("OFF")) return "off";
 
-    const match = upper.match(/BC|HV|HD|OFF|[DCV]/);
-    if (match) {
-      const code = match[0] === "OFF" ? "off" : match[0];
-      return codes.includes(code) ? code : "off";
-    }
+  if (upper === "D") return "D";
+  if (upper === "C") return "C";
+  if (upper === "V") return "V";
 
-    if (raw.includes("외")) return "외";
+  return "off";
+}
 
-    return "off";
+  let cellOcrWorker = null;
+async function buildPreview() {
+  const mapped = detectedRows.filter(row =>
+    row.name && staff.includes(row.name)
+  );
+
+  if (!mapped.length) {
+    document.getElementById("photoPreviewCard").style.display = "none";
+    return;
   }
 
-  function buildPreview() {
-    const mapped = detectedRows.filter(row =>
-      row.name && staff.includes(row.name)
-    );
+  setStatus("직원별 근무칸을 하나씩 읽고 있습니다. 잠시 기다려 주세요.");
 
-    const uniqueNames = new Set(mapped.map(row => row.name));
+  const img = document.getElementById("photoImage");
 
-    if (!mapped.length) {
-      document.getElementById("photoPreviewCard").style.display = "none";
-      return;
-    }
+  if (!cellOcrWorker) {
+    cellOcrWorker = await Tesseract.createWorker("kor+eng");
+    await cellOcrWorker.setParameters({
+      tessedit_pageseg_mode: "8"
+    });
+  }
 
-    const pitch = dateColumns.length > 1
-      ? dateColumns[1].x - dateColumns[0].x
-      : 20;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
-    const sortedY = mapped.map(r => r.y).sort((a, b) => a - b);
-    const gaps = sortedY.slice(1).map((y, i) => y - sortedY[i]);
-    const rowGap = gaps.length
-      ? gaps.reduce((a, b) => a + b, 0) / gaps.length
-      : 30;
+  await img.decode();
 
-    const yTolerance = Math.max(12, Math.min(28, rowGap * 0.48));
+  const width = img.naturalWidth;
+  const height = img.naturalHeight;
 
-    previewRows = [];
+  const pitch = dateColumns[1].x - dateColumns[0].x;
 
-    mapped.forEach(row => {
-      const dayCodes = {};
+  const sortedY = mapped.map(r => r.y).sort((a, b) => a - b);
+  const gaps = sortedY.slice(1).map((y, i) => y - sortedY[i]);
 
-      for (let day = 1; day <= lastDay; day++) {
-        dayCodes[day] = "off";
+  const rowGap = gaps.length
+    ? gaps.reduce((a, b) => a + b, 0) / gaps.length
+    : 30;
+
+  previewRows = [];
+
+  for (const row of mapped) {
+    const dayCodes = {};
+
+    for (let day = 1; day <= lastDay; day++) {
+      const centerX = dateColumns[day - 1].x;
+
+      const x0 = Math.max(0, centerX - pitch * 0.43);
+      const x1 = Math.min(width, centerX + pitch * 0.43);
+      const y0 = Math.max(0, row.y - rowGap * 0.42);
+      const y1 = Math.min(height, row.y + rowGap * 0.42);
+
+      const cropW = Math.max(1, x1 - x0);
+      const cropH = Math.max(1, y1 - y0);
+
+      canvas.width = Math.round(cropW * 3);
+      canvas.height = Math.round(cropH * 3);
+
+      ctx.drawImage(
+        img,
+        x0, y0, cropW, cropH,
+        0, 0, canvas.width, canvas.height
+      );
+
+      // 글자를 선명하게 하기 위한 흑백 처리
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const p = pixels.data;
+
+      for (let i = 0; i < p.length; i += 4) {
+        const gray = (p[i] + p[i + 1] + p[i + 2]) / 3;
+        const value = gray < 170 ? 0 : 255;
+        p[i] = p[i + 1] = p[i + 2] = value;
       }
 
-      // 해당 직원 행과 가까운 위치에 있는 OCR 단어를 날짜별로 배치
-      detectedWords.forEach(word => {
-        if (Math.abs(word.y - row.y) > yTolerance) return;
+      ctx.putImageData(pixels, 0, 0);
 
-        const nearest = dateColumns.reduce((best, col) =>
-          Math.abs(col.x - word.x) < Math.abs(best.x - word.x)
-            ? col
-            : best
-        );
+      try {
+        const result = await cellOcrWorker.recognize(canvas);
+        const raw = String(result.data.text || "").trim();
+        dayCodes[day] = getCode(raw);
+      } catch (error) {
+        dayCodes[day] = "off";
+      }
+    }
 
-        if (Math.abs(nearest.x - word.x) > pitch * 0.48) return;
-
-        const token = String(word.text || "").trim();
-        const code = getCode(token);
-
-        if (
-          /BC|HV|HD|OFF|[DCV]|외|예비군/i.test(token)
-        ) {
-          dayCodes[nearest.day] = code;
-        }
-      });
-
-      previewRows.push({
-        name: row.name,
-        days: dayCodes
-      });
+    previewRows.push({
+      name: row.name,
+      days: dayCodes
     });
-
-    // 같은 직원이 두 행에 연결된 경우 중복 방지
-    const seen = new Set();
-    previewRows = previewRows.filter(row => {
-      if (seen.has(row.name)) return false;
-      seen.add(row.name);
-      return true;
-    });
-
-    renderPreview();
-
-    const missing = staff.filter(name =>
-      !previewRows.some(row => row.name === name)
-    );
-
-    setStatus(
-      `날짜 ${lastDay}일을 기준으로 미리보기를 만들었습니다.\n` +
-      `직원 ${previewRows.length}명 연결됨.\n` +
-      (missing.length
-        ? `직원 연결이 안 된 사람: ${missing.join(", ")}\n`
-        : "") +
-      `미리보기에서 코드를 확인한 후 저장해 주세요.`
-    );
   }
 
+  const seen = new Set();
+
+  previewRows = previewRows.filter(row => {
+    if (seen.has(row.name)) return false;
+    seen.add(row.name);
+    return true;
+  });
+
+  renderPreview();
+
+  setStatus(
+    `직원 ${previewRows.length}명, ${lastDay}일 근무칸을 개별 인식했습니다.\n` +
+    `미리보기에서 근무코드를 확인해 주세요.`
+  );
+}
   function renderPreview() {
     const card = document.getElementById("photoPreviewCard");
     const table = document.getElementById("photoTable");
