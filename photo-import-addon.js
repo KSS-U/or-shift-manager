@@ -417,15 +417,30 @@ function renderResults(year, mon, days) {
 
   $("savePhotoBtn").addEventListener("click", () => {
     
-    const hasUncertain = results.some(row =>
-      row.codes.includes("확인") ||
-      row.uncertain.length > 0
+    
+    const uncertainCount = results.reduce((total, row) =>
+      total + row.uncertain.length +
+      row.codes.filter(code => code === "확인").length,
+      0
     );
 
-    if (hasUncertain) {
-      alert("아직 확인하지 않은 근무코드가 있습니다. 빨간색 칸을 모두 확인해 주세요.");
-      return;
+    if (uncertainCount > 0) {
+      const ok = confirm(
+        `확인이 필요한 칸이 총 ${uncertainCount}개 있습니다.\n\n` +
+        `개별 칸을 선택하지 않고 전체 확인 후 저장할까요?\n\n` +
+        `확인하면 읽지 못한 칸은 off로 저장됩니다.`
+      );
+
+      if (!ok) return;
+
+      results.forEach(row => {
+        row.codes = row.codes.map(code =>
+          code === "확인" ? "off" : code
+        );
+        row.uncertain = [];
+      });
     }
+
 
     if (!results.length) return;
 
