@@ -334,6 +334,7 @@ async function readOneCell(x, y, width, height) {
           uncertain,
           rawTexts
         });
+      }
 
 
       renderResults(year, mon, days);
