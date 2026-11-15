@@ -252,11 +252,12 @@
         if (!detectedDays.has(day)) missingDays.push(day);
       }
 
+     
       if (missingDays.length) {
         status.textContent =
-          `날짜 ${missingDays.join(", ")}일을 찾지 못했습니다. 사진을 확인해 주세요.`;
-        return;
+          `일부 날짜(${missingDays.join(", ")}일)를 인식하지 못했습니다. 미리보기에서 확인해 주세요.`;
       }
+
 
       // 앱에 등록된 직원 이름만 찾기
       const staff = data.staff;
@@ -283,11 +284,12 @@
         !staffRows.some(s => s.name === name)
       );
 
+      
       if (missingStaff.length) {
         status.textContent =
-          `직원 이름을 찾지 못했습니다: ${missingStaff.join(", ")}. 사진을 더 선명하게 준비해 주세요.`;
-        return;
+          `일부 직원 이름을 인식하지 못했습니다: ${missingStaff.join(", ")}. 인식된 직원의 미리보기를 표시합니다.`;
       }
+
 
       // 날짜 열 간격 계산
       const gaps = columns.slice(1)
@@ -346,24 +348,31 @@
       });
 
       // 모든 직원 × 모든 날짜 생성
-      // 인식되지 않은 코드와 빈칸은 off
+      
+      // 등록된 직원 전체 × 모든 날짜 생성
+      // 인식된 직원은 인식 결과 반영
+      // 빈칸과 인식되지 않은 근무코드는 off
       rows = [];
 
       staff.forEach(name => {
+        const recognized = staffRows.some(s => s.name === name);
+
         for (let day = 1; day <= lastDay; day++) {
-          const code =
-            codeMap.get(`${name}_${day}`) || "off";
+          const code = recognized
+            ? (codeMap.get(`${name}_${day}`) || "off")
+            : "off";
 
           rows.push({
             date: `${month}-${String(day).padStart(2, "0")}`,
             name,
             code,
-            use: true
+            use: recognized
           });
         }
       });
 
       rows.sort((a, b) =>
+
         a.date.localeCompare(b.date) ||
         staff.indexOf(a.name) - staff.indexOf(b.name)
       );
