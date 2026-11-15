@@ -86,14 +86,32 @@ button,.btn{cursor:pointer;font:inherit}.primary{border:0;background:var(--blue)
   white-space:nowrap;
   line-height:1.15;
 }
+
 .filters{
   display:flex;
-  gap:5px;
+  gap:3px;
   flex-wrap:nowrap;
-  overflow-x:auto;
-  white-space:nowrap;
-  -webkit-overflow-scrolling:touch;
+  width:100%;
 }
+
+.filter{
+  flex:1;
+  min-width:0;
+  border:1px solid var(--line);
+  background:white;
+  border-radius:6px;
+  padding:6px 1px;
+  font-size:10px;
+  font-weight:700;
+  white-space:nowrap;
+  text-align:center;
+}
+.filter.on{
+  border-color:#8bb2ff;
+  background:var(--bluebg);
+  color:#205fca;
+}
+
   .tablewrap{
   width:100%;
   overflow-x:hidden;
