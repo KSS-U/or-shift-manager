@@ -191,11 +191,16 @@ $("photoFile").addEventListener("change", e => {
 
     $("photoResult").style.display = "none";
 
-    $("readPhotoBtn").disabled = false;
-    $("readPhotoBtn").style.background = "#b9dcfa";
-$("readPhotoBtn").style.color = "#245b8a";
-$("readPhotoBtn").style.border = "1px solid #a5cef2";
-  };
+   $("readPhotoBtn").disabled = false;
+$("readPhotoBtn").style.background =
+  "linear-gradient(180deg,#aa9bc9 0%,#8975ad 48%,#69558f 100%)";
+$("readPhotoBtn").style.color = "#ffffff";
+$("readPhotoBtn").style.fontWeight = "800";
+$("readPhotoBtn").style.border = "1px solid #756397";
+$("readPhotoBtn").style.borderRadius = "10px";
+$("readPhotoBtn").style.boxShadow =
+  "0 4px 0 #51416f, 0 6px 12px rgba(65,48,95,0.22)";
+$("readPhotoBtn").style.opacity = "1";
 
   photo.onerror = () => alert("사진을 불러오지 못했습니다.");
   photo.src = URL.createObjectURL(file);
