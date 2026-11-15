@@ -515,6 +515,12 @@ button:active {
   <div>
     <label>날짜</label>
     <input type="date" id="shiftDate">
+    <div style="margin:12px 0;padding:10px;background:var(--soft);border-radius:10px">
+  <b>현재 등록된 근무 현황</b>
+  <div id="existingDayShifts" style="margin-top:8px">
+    등록된 근무가 없습니다.
+  </div>
+</div>
   </div>
 </div>
 
@@ -800,12 +806,29 @@ function renderCodeChoices(){
   });
 }
 
+function renderExistingDayShifts(date){
+  const el=document.getElementById("existingDayShifts");
+  const list=entries(date);
+
+  if(!list.length){
+    el.innerHTML='<span class="muted">등록된 근무가 없습니다.</span>';
+    return;
+  }
+
+  el.innerHTML=list.map(x=>`
+    <div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)">
+      <span class="grow">${esc(x.name)}</span>
+      <span class="chip ${x.code}">${esc(x.code)}</span>
+    </div>
+  `).join("");
+}
+
 function openShift(date,name){
   editingKey = name && data.shifts[key(date,name)]
     ? key(date,name) : null;
 
   document.getElementById("shiftDate").value=date;
-
+renderExistingDayShifts(date);
   selectedPeople = new Set(name ? [name] : []);
 
   chosenCode = editingKey ? data.shifts[editingKey] : "D";
