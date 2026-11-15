@@ -619,8 +619,8 @@ function renderCalendar(){
   let start=first.getDay();
   let n=new Date(y,m+1,0).getDate();
 
-  let html=["일","월","화","수","목","금","토"]
-    .map(d=>`<div class="dow">${d}</div>`).join("");
+let html=["일","월","화","수","목","금","토"]
+  .map((d,i)=>`<div class="dow" style="color:${i===0?"#e05265":i===6?"#548bd6":"inherit"}">${d}</div>`).join("");
 
   for(let i=0;i<start;i++){
     html+='<div class="day blank"></div>';
