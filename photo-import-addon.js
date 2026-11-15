@@ -149,19 +149,36 @@
     ctx.restore();
   }
 
-  $("photoFile").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
+$("photoFile").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    photo = new Image();
-    photo.onload = () => {
-      drawPreview();
-      $("photoStatus").textContent = "사진을 불러왔습니다. 빨간 영역과 칸 구분선을 맞춰 주세요.";
-      $("photoResult").style.display = "none";
-    };
-    photo.onerror = () => alert("사진을 불러오지 못했습니다.");
-    photo.src = URL.createObjectURL(file);
-  });
+  $("readPhotoBtn").disabled = true;
+  $("readPhotoBtn").style.background = "#ccc";
+  $("readPhotoBtn").style.color = "#666";
+  $("readPhotoBtn").style.fontWeight = "700";
+
+  photo = new Image();
+
+  photo.onload = () => {
+    drawPreview();
+
+    $("photoStatus").textContent =
+      "사진을 불러왔습니다. 빨간 영역과 칸 구분선을 맞춰 주세요.";
+
+    $("photoResult").style.display = "none";
+
+    $("readPhotoBtn").disabled = false;
+    $("readPhotoBtn").style.background = "#1976d2";
+    $("readPhotoBtn").style.color = "#fff";
+    $("readPhotoBtn").style.fontWeight = "800";
+    $("readPhotoBtn").style.opacity = "1";
+  };
+
+  photo.onerror = () => alert("사진을 불러오지 못했습니다.");
+  photo.src = URL.createObjectURL(file);
+});
+
 
   $("photoMonth").addEventListener("change", drawPreview);
 
