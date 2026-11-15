@@ -785,5 +785,8 @@ document.getElementById("importButton").onclick=()=>document.getElementById("imp
 renderAll();
 </script>
 <script src="./photo-import-addon.js"></script>
+<script>
+console.log("사진등록 파일 로드 확인");
+</script>
 <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(console.error)); }</script>
 </body></html>
