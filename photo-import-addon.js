@@ -254,13 +254,32 @@
     }));
   }
 
-  function findStaffRows(words) {
-    const firstDateX = dateColumns[0]?.x;
-    const pitch = dateColumns[1]?.x - firstDateX;
+ function findStaffRows(words) {
+  const firstDateX = dateColumns[0]?.x;
+  const pitch = dateColumns[1]?.x - firstDateX;
 
-    if (!Number.isFinite(firstDateX) || !Number.isFinite(pitch)) {
-      return [];
-    }
+  if (!Number.isFinite(firstDateX) || !Number.isFinite(pitch)) {
+    return [];
+  }
+
+  // 날짜 영역 왼쪽의 글자 위치만 이용해 직원 행 찾기
+  const leftWords = words.filter(w =>
+    w.x < firstDateX - pitch * 0.35 &&
+    w.y > 40
+  );
+
+  const lines = groupByY(leftWords, 24)
+    .filter(line => line.words.length > 0)
+    .sort((a, b) => a.y - b.y);
+
+  return lines.map((line, index) => ({
+    id: index,
+    y: line.y,
+    text: line.text,
+    name: index < staff.length ? staff[index] : "",
+    words: line.words
+  }));
+}
 
     // 날짜 첫 열보다 왼쪽에 있는 글자를 직원 이름 영역으로 간주
     const leftWords = words.filter(w =>
