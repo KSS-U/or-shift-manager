@@ -385,24 +385,19 @@ if (!worker) {
       console.error(err);
       alert("사진 인식 중 오류가 발생했습니다: " + (err.message || err));
       $("photoStatus").textContent = "인식에 실패했습니다.";
-    } finally
- 
-      {
-
-  $("readPhotoBtn").disabled = false;
-  $("readPhotoBtn").style.background =
-    "linear-gradient(180deg,#aa9bc9 0%,#8975ad 48%,#69558f 100%)";
-  $("readPhotoBtn").style.color = "#ffffff";
-  $("readPhotoBtn").style.fontWeight = "800";
-  $("readPhotoBtn").style.border = "1px solid #756397";
-  $("readPhotoBtn").style.borderRadius = "10px";
-  $("readPhotoBtn").style.boxShadow =
-    "0 4px 0 #51416f, 0 6px 12px rgba(65,48,95,0.22)";
-  $("readPhotoBtn").style.opacity = "1";
-
-
-  
-function renderResults(year, mon, days) {
+        } finally {
+      // 읽기 버튼 기본 디자인으로 복귀
+      $("readPhotoBtn").disabled = false;
+      $("readPhotoBtn").style.background = "";
+      $("readPhotoBtn").style.color = "";
+      $("readPhotoBtn").style.fontWeight = "";
+      $("readPhotoBtn").style.border = "";
+      $("readPhotoBtn").style.boxShadow = "";
+      $("readPhotoBtn").style.borderRadius = "";
+      $("readPhotoBtn").style.opacity = "";
+    }
+  });
+  function renderResults(year, mon, days) {
   let html = `<table style="border-collapse:collapse;white-space:nowrap;font-size:12px">
     <tr><th style="padding:6px;border:1px solid #ccc">직원</th>`;
 
