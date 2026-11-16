@@ -267,27 +267,7 @@ async function readOneCell(x, y, width, height) {
     30, 30, 900, 420
   );
 
-  // 흑백 변환 및 대비 개선
-  const image = ctx.getImageData(
-    0, 0, c.width, c.height
-  );
-
-  const pixels = image.data;
-
-  for (let i = 0; i < pixels.length; i += 4) {
-    const gray =
-      0.299 * pixels[i] +
-      0.587 * pixels[i + 1] +
-      0.114 * pixels[i + 2];
-
-    const value = gray < 175 ? 0 : 255;
-
-    pixels[i] = value;
-    pixels[i + 1] = value;
-    pixels[i + 2] = value;
-  }
-
-  ctx.putImageData(image, 0, 0);
+  
 
   const result = await worker.recognize(c);
 
