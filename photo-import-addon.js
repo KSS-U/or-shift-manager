@@ -409,69 +409,87 @@ if (!worker) {
       $("readPhotoBtn").style.opacity = "";
     }
   });
-  function renderResults(year, mon, days) {
-  let html = `<table style="border-collapse:collapse;white-space:nowrap;font-size:12px">
-    <tr><th style="padding:6px;border:1px solid #ccc">직원</th>`;
+
+function renderResults(year, mon, days) {
+  let html = `<div style="overflow-x:auto;">
+    <table style="border-collapse:collapse;white-space:nowrap;font-size:12px;width:100%">
+      <tr>
+        <th style="padding:7px;border:1px solid #ccc;background:#f3f0f8">직원</th>`;
 
   for (let d = 1; d <= days; d++) {
-    html += `<th style="padding:5px;border:1px solid #ccc">${d}</th>`;
+    html += `<th style="padding:5px;border:1px solid #ccc;background:#f3f0f8">${d}</th>`;
   }
+
   html += "</tr>";
 
   results.forEach((row, r) => {
-    html += `<tr><th style="padding:6px;border:1px solid #ccc">${row.name}</th>`;
+    html += `<tr>
+      <th style="padding:6px;border:1px solid #ccc;background:#f8f7fb">${row.name}</th>`;
 
     row.codes.forEach((code, d) => {
       const isUncertain = row.uncertain.includes(d);
-      const raw = row.rawTexts[d] || "";
       const shownCode = isUncertain ? "확인" : code;
 
       html += `
         <td style="
-          padding:5px;
+          padding:3px;
           border:1px solid #ccc;
+          text-align:center;
           background:${isUncertain ? "#ffe0e0" : "#fff"};
         ">
           <select
             data-row="${r}"
             data-day="${d}"
-            style="font-size:12px;${isUncertain ? "border:2px solid #e53935;" : ""}"
+            style="
+              font-size:12px;
+              font-weight:700;
+              padding:5px 2px;
+              border-radius:5px;
+              background:${isUncertain ? "#ffe0e0" : "#fff"};
+              border:${isUncertain ? "2px solid #e53935" : "1px solid #ddd"};
+            "
           >
             ${["D","C","BC","외","off","V","HV","HD","확인"].map(c =>
               `<option value="${c}" ${c === shownCode ? "selected" : ""}>${c}</option>`
             ).join("")}
           </select>
-          <div style="font-size:9px;color:#777;max-width:55px;overflow:hidden">
-            원문: ${String(raw).replace(/[&<>"']/g, "")}
-          </div>
-          ${isUncertain ? '<div style="font-size:10px;color:#d32f2f;font-weight:bold">확인 필요</div>' : ""}
         </td>`;
     });
 
     html += "</tr>";
   });
 
-  html += "</table>";
+  html += "</table></div>";
+
   $("photoTable").innerHTML = html;
 
   $("photoTable").querySelectorAll("select").forEach(select => {
     select.addEventListener("change", () => {
       const r = Number(select.dataset.row);
       const d = Number(select.dataset.day);
+
       results[r].codes[d] = select.value;
 
       if (select.value !== "확인") {
-        results[r].uncertain = results[r].uncertain.filter(i => i !== d);
+        results[r].uncertain =
+          results[r].uncertain.filter(i => i !== d);
+
         select.parentElement.style.background = "#fff";
-        select.style.border = "";
-        const warning = select.parentElement.querySelector("div:last-child");
-        if (warning && warning.textContent === "확인 필요") {
-          warning.remove();
+        select.style.background = "#fff";
+        select.style.border = "1px solid #ddd";
+      } else {
+        if (!results[r].uncertain.includes(d)) {
+          results[r].uncertain.push(d);
         }
+
+        select.parentElement.style.background = "#ffe0e0";
+        select.style.background = "#ffe0e0";
+        select.style.border = "2px solid #e53935";
       }
     });
   });
 }
+
 
 
   $("savePhotoBtn").addEventListener("click", () => {
