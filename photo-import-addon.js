@@ -268,7 +268,7 @@ async function readOneCell(x, y, width, height) {
   );
 
   
-
+document.getElementById("photoStatus").textContent = `이미지 크기: ${c.width} × ${c.height}`;
   const result = await worker.recognize(c);
 
   const raw = result.data.text || "";
