@@ -216,22 +216,31 @@ function getCode(raw) {
     .replace(/[^A-Z가-힣0-9]/g, "")
     .replace(/0/g, "O");
 
-  // 예비군이나 OFF는 off 처리
+  // 예비군 및 OFF
   if (t.includes("예비군")) return "off";
-  if (t === "OFF" || t === "OF") return "off";
+  if (["OFF", "OF", "0FF"].includes(t)) return "off";
 
-  // 근무코드 판독
-  if (t === "BC" || t === "8C") return "BC";
-  if (t === "HV") return "HV";
-  if (t === "HD") return "HD";
-  if (t === "외" || t === "외근") return "외";
-  if (t === "D") return "D";
-  if (t === "C") return "C";
-  if (t === "V") return "V";
+  // BC 오인식 보정
+  if (["BC", "8C", "BO", "8O", "B6"].includes(t)) return "BC";
 
-  // 판독이 불확실하면 확인 표시
+  // HD 오인식 보정
+  if (["HD", "HO", "H0", "H D"].includes(t)) return "HD";
+
+  // HV 오인식 보정
+  if (["HV", "H1", "HN"].includes(t)) return "HV";
+
+  // 외근
+  if (["외", "외근"].includes(t)) return "외";
+
+  // 한 글자 코드 오인식 보정
+  if (["D", "O"].includes(t)) return "D";
+  if (["C", "G"].includes(t)) return "C";
+  if (["V", "Y"].includes(t)) return "V";
+
+  // 판독 불가능한 경우만 확인
   return "확인";
 }
+
 
 
 async function readOneCell(x, y, width, height) {
