@@ -330,7 +330,7 @@ if (!worker) {
   worker = await Tesseract.createWorker("kor+eng");
 
   await worker.setParameters({
-    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
+    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
     tessedit_char_whitelist:
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz외근예비군0123456789",
     preserve_interword_spaces: "1"
