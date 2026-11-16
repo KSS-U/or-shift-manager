@@ -317,7 +317,7 @@ if (!worker) {
   await worker.setParameters({
     tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
     tessedit_char_whitelist:
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz외근",
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz외근예비군0123456789",
     preserve_interword_spaces: "1"
   });
 }
