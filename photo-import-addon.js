@@ -388,7 +388,7 @@ if (!worker) {
           row.push(result.code);
           rawTexts.push(result.raw);
 
-          if (result.code === "확인" {
+          if (result.code === "확인") {
             uncertain.push(d - 1);
           }
         }
