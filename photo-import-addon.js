@@ -236,10 +236,14 @@ function getCode(raw) {
 
 async function readOneCell(x, y, width, height) {
   const c = document.createElement("canvas");
-  c.width = 480;
-  c.height = 240;
 
-  const ctx = c.getContext("2d", { willReadFrequently: true });
+  // 기존보다 2배 크게 확대
+  c.width = 960;
+  c.height = 480;
+
+  const ctx = c.getContext("2d", {
+    willReadFrequently: true
+  });
 
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, c.width, c.height);
@@ -247,11 +251,34 @@ async function readOneCell(x, y, width, height) {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
+  // 근무코드 영역 확대
   ctx.drawImage(
     photo,
     x, y, width, height,
-    15, 15, 450, 210
+    30, 30, 900, 420
   );
+
+  // 흑백 변환 및 대비 개선
+  const image = ctx.getImageData(
+    0, 0, c.width, c.height
+  );
+
+  const pixels = image.data;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const gray =
+      0.299 * pixels[i] +
+      0.587 * pixels[i + 1] +
+      0.114 * pixels[i + 2];
+
+    const value = gray < 175 ? 0 : 255;
+
+    pixels[i] = value;
+    pixels[i + 1] = value;
+    pixels[i + 2] = value;
+  }
+
+  ctx.putImageData(image, 0, 0);
 
   const result = await worker.recognize(c);
 
@@ -265,7 +292,6 @@ async function readOneCell(x, y, width, height) {
     confidence: confidence
   };
 }
-
 
   $("readPhotoBtn").addEventListener("click", async () => {
     const month = $("photoMonth").value;
