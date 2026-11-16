@@ -342,7 +342,9 @@ if (!worker) {
   worker = await Tesseract.createWorker("kor+eng");
 
 await worker.setParameters({
-  tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD
+  tessedit_pageseg_mode: Tesseract.PSM.SINGLE_WORD,
+  tessedit_char_whitelist:
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz외근예비군0123456789"
 });
 }
 
