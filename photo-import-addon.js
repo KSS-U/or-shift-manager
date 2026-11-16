@@ -267,7 +267,7 @@ async function readOneCell(x, y, width, height) {
     30, 30, 900, 420
   );
 const previewImage = c.toDataURL("image/jpeg");
-  
+  $("photoStatus").innerHTML = `<img src="${previewImage}" style="width:220px;border:2px solid #8975ad;border-radius:8px;">`;
 document.getElementById("photoStatus").textContent = `이미지 크기: ${c.width} × ${c.height}`;
   const result = await worker.recognize(c);
 
