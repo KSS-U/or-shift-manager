@@ -213,19 +213,26 @@ function getCode(raw) {
   const t = String(raw || "")
     .toUpperCase()
     .replace(/\s/g, "")
-    .replace(/[^A-Z가-힣]/g, "");
+    .replace(/[^A-Z가-힣0-9]/g, "")
+    .replace(/0/g, "O");
 
-  if (t === "BC") return "BC";
+  // 예비군이나 OFF는 off 처리
+  if (t.includes("예비군")) return "off";
+  if (t === "OFF" || t === "OF") return "off";
+
+  // 근무코드 판독
+  if (t === "BC" || t === "8C") return "BC";
   if (t === "HV") return "HV";
   if (t === "HD") return "HD";
-  if (t === "OFF") return "off";
   if (t === "외" || t === "외근") return "외";
   if (t === "D") return "D";
   if (t === "C") return "C";
   if (t === "V") return "V";
 
+  // 판독이 불확실하면 확인 표시
   return "확인";
 }
+
 
 async function readOneCell(x, y, width, height) {
   const c = document.createElement("canvas");
