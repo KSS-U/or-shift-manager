@@ -405,7 +405,14 @@ if (!worker) {
      
       renderResults(year, mon, days);
 
-      $("photoStatus").textContent = "인식이 끝났습니다. 결과를 확인해 주세요.";
+      const sampleRaw = results.slice(0, 2).map(row =>
+  row.name + ": " +
+  row.rawTexts.slice(0, 5).map((v, i) =>
+    (i + 1) + "일=" + JSON.stringify(v)
+  ).join(" / ")
+).join(" | ");
+
+$("photoStatus").textContent = "인식 원문 확인: " + sampleRaw;
       $("photoResult").style.display = "block";
 
       // 읽기 버튼 기본 디자인으로 복귀
