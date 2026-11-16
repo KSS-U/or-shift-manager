@@ -267,7 +267,19 @@ async function readOneCell(x, y, width, height) {
     30, 30, 900, 420
   );
 const previewImage = c.toDataURL("image/jpeg");
-  $("photoStatus").innerHTML = `<img src="${previewImage}" style="width:220px;border:2px solid #8975ad;border-radius:8px;">`;
+
+let previewBox = document.getElementById("ocrPreview");
+if (!previewBox) {
+  previewBox = document.createElement("div");
+  previewBox.id = "ocrPreview";
+  document.body.appendChild(previewBox);
+}
+
+previewBox.innerHTML =
+  `<div style="padding:10px;background:white;border:2px solid #8975ad;position:fixed;bottom:20px;left:10px;z-index:99999;width:260px;">
+    <b>OCR 이미지 확인</b>
+    <img src="${previewImage}" style="width:100%;display:block;margin-top:8px;">
+  </div>`;
 document.getElementById("photoStatus").textContent = `이미지 크기: ${c.width} × ${c.height}`;
   const result = await worker.recognize(c);
 
