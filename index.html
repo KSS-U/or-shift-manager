@@ -672,9 +672,16 @@ let list=entries(date)
 
 document.querySelectorAll(".day[data-date]").forEach(b=>{
   b.onclick=()=>{
-    selectedDate=b.dataset.date;
-    current=parseDate(selectedDate);
-    openShift(selectedDate,null);
+    const clickedDate = b.dataset.date;
+
+    if (selectedDate === clickedDate) {
+      current = parseDate(clickedDate);
+      openShift(clickedDate, null);
+    } else {
+      selectedDate = clickedDate;
+      current = parseDate(clickedDate);
+      renderCalendar();
+    }
   };
 });
 }
