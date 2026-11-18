@@ -598,7 +598,7 @@ function shown(code){return activeCodes.size===0||activeCodes.has(code)}
 function renderCalendar(){
   renderFilters();
 
-  const holidays = new Set([
+  window.holidays = new Set([
     "2026-01-01",
     "2026-02-16","2026-02-17","2026-02-18",
     "2026-03-01","2026-03-02",
@@ -762,7 +762,7 @@ function renderWeek(){
     days.push({
       date: iso(d),
       label: `${["일","월","화","수","목","금","토"][d.getDay()]} ${d.getMonth()+1}/${d.getDate()}`,
-      special: d.getDay()===0 || d.getDay()===6 || holidays.has(iso(d))
+      special: d.getDay()===0 || d.getDay()===6 || window.holidays.has(iso(d))
     });
   }
 
