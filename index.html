@@ -843,6 +843,7 @@ function renderTable(){
 }
 
 
+
 function renderWeek(){
   let end = new Date(weekStart);
   end.setDate(end.getDate()+6);
@@ -863,32 +864,39 @@ function renderWeek(){
       special: d.getDay()===0 || d.getDay()===6 || window.holidays.has(iso(d))
     });
   }
-  const visibleDays = days.filter(day => {
-    const allowedCodes = day.special
-      ? ["C","BC","외","HD","HV"]
-      : ["C","BC","외","HD","HV","off","V"];
 
-    return data.staff.some(name =>
-      allowedCodes.includes(data.shifts[key(day.date,name)])
-    );
-  });
+  // 한 주 동안 근무자가 있는 코드 행만 표시
+  const visibleCodes = codes.filter(code =>
+    days.some(day => {
+      const actualCodes =
+        day.special && code === "off" ? [] :
+        code === "H" ? ["HD","HV"] :
+        code === "off" ? ["off","V"] :
+        [code];
+
+      return data.staff.some(name =>
+        actualCodes.includes(data.shifts[key(day.date,name)])
+      );
+    })
+  );
+
   let h = `<table class="weekmatrix"><thead><tr><th>근무</th>`;
 
-  visibleDays.forEach(day=>{
+  days.forEach(day=>{
     const todayClass = day.date === iso(new Date()) ? " today" : "";
     h += `<th class="${todayClass}">${day.label}</th>`;
   });
 
   h += `</tr></thead><tbody>`;
 
-  codes.forEach(code=>{
-    const cells = visibleDays.map(day=>{
+  visibleCodes.forEach(code=>{
+    const cells = days.map(day=>{
 
       const actualCodes =
-  day.special && code === "off" ? [] :
-  code === "H" ? ["HD","HV"] :
-  code === "off" ? ["off","V"] :
-  [code];
+        day.special && code === "off" ? [] :
+        code === "H" ? ["HD","HV"] :
+        code === "off" ? ["off","V"] :
+        [code];
 
       const names = data.staff.filter(name =>
         actualCodes.includes(data.shifts[key(day.date,name)])
