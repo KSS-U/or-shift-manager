@@ -763,6 +763,11 @@ document.querySelectorAll(".day[data-date]").forEach(b=>{
   b.onclick=()=>{
     const clickedDate = b.dataset.date;
 
+    if (selectedDate === clickedDate) {
+      openShift(clickedDate, null);
+      return;
+    }
+
     selectedDate = clickedDate;
     current = parseDate(clickedDate);
 
@@ -774,6 +779,7 @@ document.querySelectorAll(".day[data-date]").forEach(b=>{
     renderCalendar();
     renderTable();
     renderWeek();
+    renderDay();
   };
 });
 }
