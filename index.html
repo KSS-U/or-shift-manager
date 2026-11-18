@@ -694,6 +694,66 @@ document.querySelectorAll(".tabs button").forEach(b=>{
     },100);
   };
 });
+  // 화면 좌우 스와이프로 탭 이동
+(() => {
+  const views = ["calendar", "table", "week", "people", "auto"];
+
+  let startX = 0;
+  let startY = 0;
+  let startTarget = null;
+
+  document.addEventListener("touchstart", e => {
+    if (!e.touches.length) return;
+
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startTarget = e.target;
+  }, { passive: true });
+
+  document.addEventListener("touchend", e => {
+    if (!startTarget || !e.changedTouches.length) return;
+
+    const target = startTarget;
+
+    if (!target.closest(".view")) return;
+
+    if (target.closest(
+      "button, input, select, textarea, a, label"
+    )) return;
+
+    const scrollArea = target.closest("*");
+
+    if (scrollArea) {
+      let el = target;
+
+      while (el && el !== document.body) {
+        if (el.scrollWidth > el.clientWidth + 5) return;
+        el = el.parentElement;
+      }
+    }
+
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+
+    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.3) {
+      return;
+    }
+
+    const currentIndex = views.indexOf(view);
+
+    if (currentIndex < 0) return;
+
+    if (dx < 0 && currentIndex < views.length - 1) {
+      switchView(views[currentIndex + 1]);
+    }
+
+    if (dx > 0 && currentIndex > 0) {
+      switchView(views[currentIndex - 1]);
+    }
+
+    startTarget = null;
+  }, { passive: true });
+})();
 function renderFilters(){let el=document.getElementById("filters");el.innerHTML=CODES.map(c=>`<button class="filter ${activeCodes.has(c)?"on":""}" data-code="${c}">${c}</button>`).join("");el.querySelectorAll("button").forEach(b=>b.onclick=()=>{let c=b.dataset.code;activeCodes.has(c)?activeCodes.delete(c):activeCodes.add(c);renderFilters();renderCalendar();renderDay()})}
 document.getElementById("clearFilters").onclick=()=>{activeCodes.clear();renderFilters();renderCalendar();renderDay()};
 function shown(code){return activeCodes.size===0||activeCodes.has(code)}
