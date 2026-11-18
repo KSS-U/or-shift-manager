@@ -778,7 +778,6 @@ document.querySelectorAll(".day[data-date]").forEach(b=>{
 });
 }
 
-}
 function renderDay(){let date=parseDate(selectedDate);document.getElementById("dayTitle").textContent=`${date.getMonth()+1}월 ${date.getDate()}일 근무 현황`;let list=entries(selectedDate).filter(x=>shown(x.code));let el=document.getElementById("dayShifts");el.className=list.length?"":"empty";el.innerHTML=list.length?list.map(x=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(x.name)}</b><span class="chip ${x.code}">${x.code}</span><button class="secondary small" data-edit="${esc(x.name)}">수정</button></div>`).join(""):"등록된 근무가 없거나 필터 조건에 맞는 근무가 없습니다.";el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShift(selectedDate,b.dataset.edit))}
 
 function renderTable(){
