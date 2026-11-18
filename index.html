@@ -529,6 +529,11 @@ button:active {
 #rosterTable td.today {
   background-color: #fff2b3 !important;
 }
+  /* 주간 달력 오늘 날짜 열 강조 */
+.weekmatrix th.today,
+.weekmatrix td.today {
+  background-color: #fff2b3 !important;
+}
 </style>
 </head>
 <body>
@@ -861,8 +866,9 @@ function renderWeek(){
   let h = `<table class="weekmatrix"><thead><tr><th>근무</th>`;
 
   days.forEach(day=>{
-    h += `<th>${day.label}</th>`;
-  });
+    const todayClass = day.date === iso(new Date()) ? " today" : "";
+    h += `<th class="${todayClass}">${day.label}</th>`;
+});
 
   h += `</tr></thead><tbody>`;
 
@@ -876,9 +882,11 @@ function renderWeek(){
         data.shifts[key(day.date,name)] === code
       );
 
-      return `<td>${names.map(name =>
-        `<span class="weekname">${esc(name)}</span>`
-      ).join("")}</td>`;
+      const todayClass = day.date === iso(new Date()) ? " today" : "";
+
+return `<td class="${todayClass}">${names.map(name =>
+  `<span class="weekname">${esc(name)}</span>`
+).join("")}</td>`;
     });
 
     if(days.every(day =>
