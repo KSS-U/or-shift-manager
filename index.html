@@ -863,7 +863,15 @@ function renderWeek(){
       special: d.getDay()===0 || d.getDay()===6 || window.holidays.has(iso(d))
     });
   }
+  const visibleDays = days.filter(day => {
+    const allowedCodes = day.special
+      ? ["C","BC","외","HD","HV"]
+      : ["C","BC","외","HD","HV","off","V"];
 
+    return data.staff.some(name =>
+      allowedCodes.includes(data.shifts[key(day.date,name)])
+    );
+  });
   let h = `<table class="weekmatrix"><thead><tr><th>근무</th>`;
 
   days.forEach(day=>{
