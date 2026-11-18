@@ -1,23 +1,17 @@
-
 (() => {
-  if (document.getElementById("excelView")) return;
+  if (document.getElementById("autoView")) return;
 
-  const tabs = document.querySelector(".tabs");
   const app = document.querySelector(".app");
 
-  if (!tabs || !app) {
+  if (!app) {
     alert("앱 화면을 찾지 못했습니다.");
     return;
   }
 
-  const tab = document.createElement("button");
-  tab.textContent = "엑셀 등록";
-  tab.dataset.view = "excelView";
-  tabs.appendChild(tab);
-
-  const view = document.createElement("section");
-  view.id = "excelView";
-  view.className = "view";
+const view = document.createElement("section");
+view.id = "autoView";
+view.className = "view hidden";
+view.dataset.view = "auto";
 
   view.innerHTML = `
     <div class="card">
@@ -67,27 +61,6 @@
 
   let results = [];
   let selectedFileName = "";
-
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".view").forEach(v => {
-      v.style.display = "none";
-    });
-
-    view.style.display = "block";
-
-    document.querySelectorAll(".tabs button").forEach(b => {
-      b.classList.remove("active");
-    });
-
-    tab.classList.add("active");
-
-    setTimeout(() => {
-      $("excelFile").scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 150);
-  });
 
   function normalizeCode(value) {
     const t = String(value ?? "")
