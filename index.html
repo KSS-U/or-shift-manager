@@ -524,6 +524,11 @@ button:active {
 #calendar .day.holiday .daynum {
   color: #e05265 !important;
 }
+  /* 엑셀형 주간표 오늘 날짜 강조 */
+#rosterTable th.today,
+#rosterTable td.today {
+  background-color: #fff2b3 !important;
+}
 </style>
 </head>
 <body>
@@ -787,11 +792,16 @@ function renderTable(){
 
   let h="<table><thead><tr><th>직원</th>";
 
+  const today = iso(new Date());
+
   dates.forEach(d=>{
     let date=iso(d);
     let day=["일","월","화","수","목","금","토"][d.getDay()];
     let cls=d.getDay()===0 || holidays.has(date) ? "sunday" :
             d.getDay()===6 ? "saturday" : "";
+
+    if(date===today) cls += " today";
+
     h+=`<th class="${cls}">
   <span>${day}</span>
   <span class="table-date">${d.getMonth()+1}/${d.getDate()}</span>
@@ -806,7 +816,11 @@ function renderTable(){
     dates.forEach(d=>{
       let date=iso(d);
       let c=data.shifts[key(date,name)];
-      h+=`<td><button class="filter ${c&&shown(c)?"on":""}" data-cell="${date}" data-name="${esc(name)}">${c||"＋"}</button></td>`;
+      let todayClass = date===iso(new Date()) ? " today" : "";
+
+      h+=`<td class="${todayClass}">
+        <button class="filter ${c&&shown(c)?"on":""}" data-cell="${date}" data-name="${esc(name)}">${c||"＋"}</button>
+      </td>`;
     });
 
     h+="</tr>";
