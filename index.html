@@ -763,17 +763,14 @@ document.querySelectorAll(".day[data-date]").forEach(b=>{
   b.onclick=()=>{
     const clickedDate = b.dataset.date;
 
-    selectedDate = clickedDate;
-    current = parseDate(clickedDate);
-
-    const selected = parseDate(clickedDate);
-    weekStart = new Date(selected);
-    weekStart.setDate(selected.getDate() - ((selected.getDay()+6)%7));
-    weekStart.setHours(0,0,0,0);
-
-    renderCalendar();
-    renderTable();
-    renderWeek();
+    if (selectedDate === clickedDate) {
+      current = parseDate(clickedDate);
+      openShift(clickedDate, null);
+    } else {
+      selectedDate = clickedDate;
+      current = parseDate(clickedDate);
+      renderCalendar();
+    }
   };
 });
 
