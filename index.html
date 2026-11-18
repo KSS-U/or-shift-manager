@@ -745,7 +745,61 @@ function renderTable(){
 });
 }
 
-function renderWeek(){let end=new Date(weekStart);end.setDate(end.getDate()+6);document.getElementById("weekTitle").textContent=`${weekStart.getMonth()+1}/${weekStart.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;let h="";for(let i=0;i<7;i++){let d=new Date(weekStart);d.setDate(d.getDate()+i);let date=iso(d);h+=`<div class="weekday"><div class="date">${["일","월","화","수","목","금","토"][d.getDay()]} ${d.getMonth()+1}/${d.getDate()}</div>`;data.staff.forEach(name=>{let c=data.shifts[key(date,name)];if(c)h+=`<div class="personline"><span>${esc(name)}</span><b class="chip ${c}">${c}</b></div>`});h+="</div>"}document.getElementById("weekGrid").innerHTML=h}
+function renderWeek(){
+  let end = new Date(weekStart);
+  end.setDate(end.getDate()+6);
+
+  document.getElementById("weekTitle").textContent =
+    `${weekStart.getMonth()+1}/${weekStart.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;
+
+  const codes = ["C","BC","외","off","V","HV","HD","D"];
+  const days = [];
+
+  for(let i=0;i<7;i++){
+    let d = new Date(weekStart);
+    d.setDate(d.getDate()+i);
+
+    days.push({
+      date: iso(d),
+      label: `${["일","월","화","수","목","금","토"][d.getDay()]} ${d.getMonth()+1}/${d.getDate()}`,
+      special: d.getDay()===0 || d.getDay()===6 || holidays.has(iso(d))
+    });
+  }
+
+  let h = `<table class="weekmatrix"><thead><tr><th>근무</th>`;
+
+  days.forEach(day=>{
+    h += `<th>${day.label}</th>`;
+  });
+
+  h += `</tr></thead><tbody>`;
+
+  codes.forEach(code=>{
+    const cells = days.map(day=>{
+      if(day.special && !["C","BC","외"].includes(code)){
+        return `<td></td>`;
+      }
+
+      const names = data.staff.filter(name =>
+        data.shifts[key(day.date,name)] === code
+      );
+
+      return `<td>${names.map(name =>
+        `<span class="weekname">${esc(name)}</span>`
+      ).join("")}</td>`;
+    });
+
+    if(days.every(day =>
+      day.special && !["C","BC","외"].includes(code)
+    )) return;
+
+    h += `<tr><th><b class="chip ${code}">${code}</b></th>${cells.join("")}</tr>`;
+  });
+
+  h += `</tbody></table>`;
+
+  document.getElementById("weekGrid").innerHTML = h;
+}
 function renderPeople(){document.getElementById("peopleList").innerHTML=data.staff.map((n,i)=>`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line)"><b class="grow">${esc(n)}</b><button class="secondary small" data-rename="${i}">이름 수정</button><button class="secondary small" data-remove="${i}">삭제</button></div>`).join("");document.getElementById("personSelect").innerHTML=data.staff.map(n=>`<option>${esc(n)}</option>`).join("");document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{let i=+b.dataset.remove,n=data.staff[i];if(confirm(n+" 직원을 삭제할까요? 등록된 근무도 함께 삭제됩니다.")){data.staff.splice(i,1);Object.keys(data.shifts).forEach(k=>{if(k.endsWith("|"+n))delete data.shifts[k]});save()}});document.querySelectorAll("[data-rename]").forEach(b=>b.onclick=()=>{let i=+b.dataset.rename,old=data.staff[i],n=prompt("새 직원 이름",old);if(n&&n.trim()&&n.trim()!==old){n=n.trim();if(data.staff.includes(n))return alert("이미 등록된 이름입니다.");data.staff[i]=n;Object.keys(data.shifts).forEach(k=>{if(k.endsWith("|"+old)){let date=k.split("|")[0],v=data.shifts[k];delete data.shifts[k];data.shifts[key(date,n)]=v}});save()}});document.getElementById("personMonth").value=iso(current).slice(0,7);renderPersonSummary()}
 function renderPersonSummary(){let n=document.getElementById("personSelect").value;if(!n)return;let ym=document.getElementById("personMonth").value||iso(current).slice(0,7);let arr=Object.entries(data.shifts).filter(([k])=>k.startsWith(ym)&&k.endsWith("|"+n));let counts=CODES.map(c=>[c,arr.filter(x=>x[1]===c).length]).filter(x=>x[1]);document.getElementById("personSummary").innerHTML=`<p><b>${esc(n)}</b> · ${ym}</p><div class="filters">${counts.length?counts.map(([c,num])=>`<span class="filter on">${c} ${num}회</span>`).join(""):"<span class='muted'>등록된 근무가 없습니다.</span>"}</div><div style="margin-top:12px">${arr.sort((a,b)=>a[0].localeCompare(b[0])).map(([k,c])=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="grow">${k.split("|")[0]}</span><span class="chip ${c}">${c}</span></div>`).join("")}</div>`}
 
