@@ -874,7 +874,7 @@ function renderWeek(){
   });
   let h = `<table class="weekmatrix"><thead><tr><th>근무</th>`;
 
-  days.forEach(day=>{
+  visibleDays.forEach(day=>{
     const todayClass = day.date === iso(new Date()) ? " today" : "";
     h += `<th class="${todayClass}">${day.label}</th>`;
   });
@@ -882,7 +882,7 @@ function renderWeek(){
   h += `</tr></thead><tbody>`;
 
   codes.forEach(code=>{
-    const cells = days.map(day=>{
+    const cells = visibleDays.map(day=>{
 
       const actualCodes =
   day.special && code === "off" ? [] :
