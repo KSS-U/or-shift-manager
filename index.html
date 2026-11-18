@@ -1044,12 +1044,69 @@ document.getElementById("prevMonth").onclick=()=>{current.setMonth(current.getMo
   weekStart.setDate(weekStart.getDate()-7);
   renderTable();
 };
+  function addSwipe(target, onLeft, onRight){
+  let startX = 0;
+  let startY = 0;
 
+  target.addEventListener("touchstart", e=>{
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, {passive:true});
+
+  target.addEventListener("touchend", e=>{
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+
+    if(dx < 0) onLeft();
+    else onRight();
+  }, {passive:true});
+}
+addSwipe(
+  document.getElementById("calendar"),
+  ()=>document.getElementById("nextMonth").click(),
+  ()=>document.getElementById("prevMonth").click()
+);
+  addSwipe(
+  document.getElementById("weekGrid"),
+  ()=>{
+    weekStart.setDate(weekStart.getDate()+7);
+    renderWeek();
+    renderTable();
+  },
+  ()=>{
+    weekStart.setDate(weekStart.getDate()-7);
+    renderWeek();
+    renderTable();
+  }
+);
+  addSwipe(
+  document.getElementById("rosterTable"),
+  ()=>{
+    weekStart.setDate(weekStart.getDate()+7);
+    renderTable();
+  },
+  ()=>{
+    weekStart.setDate(weekStart.getDate()-7);
+    renderTable();
+  }
+);
 document.getElementById("nextTable").onclick=()=>{
   weekStart.setDate(weekStart.getDate()+7);
   renderTable();
 };
-document.getElementById("prevWeek").onclick=()=>{weekStart.setDate(weekStart.getDate()-7);renderWeek()};document.getElementById("nextWeek").onclick=()=>{weekStart.setDate(weekStart.getDate()+7);renderWeek()};
+document.getElementById("prevWeek").onclick=()=>{
+  weekStart.setDate(weekStart.getDate()-7);
+  renderWeek();
+  renderTable();
+};
+
+document.getElementById("nextWeek").onclick=()=>{
+  weekStart.setDate(weekStart.getDate()+7);
+  renderWeek();
+  renderTable();
+};
 document.getElementById("addPerson").onclick=()=>{document.getElementById("personModal").classList.add("show");document.getElementById("newPersonName").value=""};document.getElementById("closePersonModal").onclick=()=>document.getElementById("personModal").classList.remove("show");document.getElementById("savePerson").onclick=()=>{let n=document.getElementById("newPersonName").value.trim();if(!n)return alert("이름을 입력해 주세요.");if(data.staff.includes(n))return alert("이미 등록된 직원입니다.");data.staff.push(n);document.getElementById("personModal").classList.remove("show");save()};
 document.getElementById("personSelect").onchange=renderPersonSummary;document.getElementById("personMonth").onchange=renderPersonSummary;
 document.getElementById("exportData").onclick=()=>{let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="OR근무관리_백업.json";a.click();URL.revokeObjectURL(a.href)};
