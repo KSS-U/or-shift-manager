@@ -877,9 +877,10 @@ function renderWeek(){
     const cells = days.map(day=>{
 
       const actualCodes =
-        code === "H" ? ["HD","HV"] :
-        code === "off" ? ["off","V"] :
-        [code];
+  day.special && code === "off" ? [] :
+  code === "H" ? ["HD","HV"] :
+  code === "off" ? ["off","V"] :
+  [code];
 
       const names = data.staff.filter(name =>
         actualCodes.includes(data.shifts[key(day.date,name)])
