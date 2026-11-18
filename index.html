@@ -849,7 +849,7 @@ function renderWeek(){
   document.getElementById("weekTitle").textContent =
     `${weekStart.getMonth()+1}/${weekStart.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;
 
-  const codes = ["C","BC","외","off","V","HV","HD","D"];
+  const codes = ["C","BC","외","H","off"];
   const days = [];
 
   for(let i=0;i<7;i++){
@@ -874,13 +874,19 @@ function renderWeek(){
 
   codes.forEach(code=>{
     const cells = days.map(day=>{
-      if(day.special && !["C","BC","외"].includes(code)){
-        return `<td></td>`;
+      if(day.special && !["C","BC","외","H","off"].includes(code)){
+  return `<td></td>`;
+}
       }
 
-      const names = data.staff.filter(name =>
-        data.shifts[key(day.date,name)] === code
-      );
+      const actualCodes =
+  code === "H" ? ["HD","HV"] :
+  code === "off" ? ["off","V"] :
+  [code];
+
+const names = data.staff.filter(name =>
+  actualCodes.includes(data.shifts[key(day.date,name)])
+);
 
       const todayClass = day.date === iso(new Date()) ? " today" : "";
 
@@ -890,8 +896,8 @@ return `<td class="${todayClass}">${names.map(name =>
     });
 
     if(days.every(day =>
-      day.special && !["C","BC","외"].includes(code)
-    )) return;
+  day.special && !["C","BC","외","H","off"].includes(code)
+)) return;
 
     h += `<tr><th><b class="chip ${code}">${code}</b></th>${cells.join("")}</tr>`;
   });
